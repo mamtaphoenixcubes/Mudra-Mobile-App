@@ -1,0 +1,56 @@
+{
+  "common": {
+    "cancel": "Cancel",
+    "done": "Done",
+    "save": "Save",
+    "create": "Create",
+    "delete": "Delete",
+    "remove": "Remove",
+    "back": "Back",
+    "loading": "Loading...",
+    "retry": "Retry",
+    "search": "Search"
+  },
+  "preferences": {
+    "title": "Preferences",
+    "subtitle": "Customize your experience.",
+    "theme": "Theme",
+    "sound": "Sound & Music",
+    "soundSubtitle": "Ambient sound on",
+    "language": "Language",
+    "reminders": "Session Reminders",
+    "remindersSubtitle": "Remind me to take session",
+    "autoNext": "Auto Next Session",
+    "autoNextSubtitle": "Automatically play next session",
+    "wifiOnly": "Download over Wi-Fi only",
+    "wifiOnlySubtitle": "Save mobile data"
+  },
+  "language": {
+    "title": "Language",
+    "subtitle": "Choose your preferred language",
+    "english": "English"
+  },
+  "theme": {
+    "title": "Theme",
+    "subtitle": "Choose how Mudras looks",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System default"
+  },
+  "playlist": {
+    "myPlaylists": "My Playlists",
+    "addToPlaylist": "Add to playlist",
+    "addToPlaylistSubtitle": "Save this session to a playlist",
+    "newPlaylist": "New playlist",
+    "newPlaylistSubtitle": "Give it a name you'll recognize later",
+    "createPlaylist": "Create playlist",
+    "playlistName": "Playlist name",
+    "yourPlaylists": "Your playlists",
+    "findPlaylist": "Find a playlist",
+    "noPlaylistsYet": "No playlists yet — create your first one above.",
+    "noPlaylistsMatch": "No playlists match your search.",
+    "emptyPlaylist": "Empty playlist",
+    "audio": "Audio",
+    "video": "Video"
+  }
+}
