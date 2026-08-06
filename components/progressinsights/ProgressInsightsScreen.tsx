@@ -35,6 +35,8 @@ useEffect(() => {
   fetchDistribution(profileDocumentId);
   fetchAnalytics(profileDocumentId);
 }, [profileDocumentId]);
+console.log(overview,"sumaryyyyyyyy");
+
     return (
         <View style={styles.screen}>
             <ProgressHeader />
@@ -50,9 +52,9 @@ useEffect(() => {
 
                 {activeTab === 'All' && (
                     <>
-                        <OverallProgress />
-                        <PracticeAnalysis />
-                        <ConsistencySection />
+                         <OverallProgress summary={summary} />
+                        <PracticeAnalysis distribution={distribution} />
+                       <ConsistencySection overview={overview} />
                         <AnalyticsSection />
                         <GoalBanner />
                     </>

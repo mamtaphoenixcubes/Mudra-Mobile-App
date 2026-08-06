@@ -23,7 +23,19 @@ import {
 } from '@/store/streakStore';
 import { useGoalStore, getGoalProgress } from '@/store/goalStore';
 
-export default function OverallProgress() {
+interface OverallProgressProps {
+    summary?: {
+        totalCompletedSessions: number;
+        totalPracticeSeconds: number;
+        totalPracticeMinutes: number;
+        formatted: string;
+        currentStreak: number;
+    };
+}
+
+export default function OverallProgress({
+    summary,
+}: OverallProgressProps) {
     const { colors, isDark } = useTheme()
     const styles = getProgressInsightsStyles(colors)
     const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -46,29 +58,48 @@ export default function OverallProgress() {
     const goalType = useGoalStore((s) => s.goalType);
     const targetValue = useGoalStore((s) => s.targetValue);
     const goalProgress = getGoalProgress(goalType, targetValue, events);
-
-    const STATS = [
-        {
-            icon: isDark ? <ClockWhite width={26} height={26} /> : <ClockSvg width={26} height={26} />,
-            value: formatMinutesAsHoursMinutes(rangeStats.totalMinutes),
-            label: 'Total Practice\nTime',
-        },
-        {
-            icon: isDark ? <LotusWhite width={26} height={26} /> : <LotusBlack width={26} height={26} />,
-            value: String(rangeStats.sessionCount),
-            label: 'Sessions\nCompleted',
-        },
-        {
-            icon: isDark ? <FireWhite width={26} height={26} /> : <FireSvg width={26} height={26} />,
-            value: String(currentStreak),
-            label: 'Day Streak\nKeep it up!',
-        },
-        {
-            icon: isDark ? <StarWhite width={26} height={26} /> : <StarSvg width={26} height={26} />,
-            value: goalProgress ? `${goalProgress.current}/${goalProgress.target}` : '—',
-            label: goalProgress ? 'Weekly Goal\nProgress' : 'Weekly Goal\nNot set yet',
-        },
-    ]
+const STATS = [
+    {
+        icon: isDark ? (
+            <ClockWhite width={26} height={26} />
+        ) : (
+            <ClockSvg width={26} height={26} />
+        ),
+        value: summary?.formatted ?? '0m',
+        label: 'Total Practice\nTime',
+    },
+    {
+        icon: isDark ? (
+            <LotusWhite width={26} height={26} />
+        ) : (
+            <LotusBlack width={26} height={26} />
+        ),
+        value: String(summary?.totalCompletedSessions ?? 0),
+        label: 'Sessions\nCompleted',
+    },
+    {
+        icon: isDark ? (
+            <FireWhite width={26} height={26} />
+        ) : (
+            <FireSvg width={26} height={26} />
+        ),
+        value: String(summary?.currentStreak ?? 0),
+        label: 'Day Streak\nKeep it up!',
+    },
+    {
+        icon: isDark ? (
+            <StarWhite width={26} height={26} />
+        ) : (
+            <StarSvg width={26} height={26} />
+        ),
+        value: goalProgress
+            ? `${goalProgress.current}/${goalProgress.target}`
+            : '—',
+        label: goalProgress
+            ? 'Weekly Goal\nProgress'
+            : 'Weekly Goal\nNot set yet',
+    },
+];
     return (
         <View style={styles.overallContainer}>
             <View style={styles.overallCard}>

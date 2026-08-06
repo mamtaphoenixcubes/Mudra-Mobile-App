@@ -26,7 +26,13 @@ const SEGMENTS = [
     { percent: 0.25, color: '#DED8FF' },
 ];
 
-function DonutChart({ textColor }: { textColor: string }) {
+function DonutChart({
+    textColor,
+    segments,
+}: {
+    textColor: string;
+    segments: { percent: number; color: string }[];
+}) {
     let offset = 0;
     const CENTER = DONUT_SIZE / 2;
     const LABEL_RADIUS = R + STROKE / 2 + 16;
@@ -35,7 +41,7 @@ function DonutChart({ textColor }: { textColor: string }) {
         <View style={{ width: DONUT_SIZE + 50, height: DONUT_SIZE + 50, alignItems: 'center', justifyContent: 'center' }}>
             <Svg width={DONUT_SIZE} height={DONUT_SIZE}>
                 <G rotation="-90" origin={`${CENTER}, ${CENTER}`}>
-                    {SEGMENTS.map((seg, i) => {
+                    {segments.map((seg, i) => {
                         const dash = CIRCUMFERENCE * seg.percent;
                         const gap = CIRCUMFERENCE - dash;
                         const circle = (
@@ -60,7 +66,7 @@ function DonutChart({ textColor }: { textColor: string }) {
             {/* Percentage labels outside ring */}
             {(() => {
                 let labelOffset = 0;
-                return SEGMENTS.map((seg, i) => {
+                return segments.map((seg, i) => {
                     const startAngle = -90 + labelOffset * 360;
                     const midAngle = startAngle + (seg.percent * 360) / 2;
                     const rad = (midAngle * Math.PI) / 180;
@@ -90,9 +96,86 @@ function DonutChart({ textColor }: { textColor: string }) {
     );
 }
 
-export default function PracticeAnalysis() {
+interface PracticeAnalysisProps {
+    distribution?: {
+        mudra?: {
+            sessions: number;
+            duration: number;
+        };
+        nidra?: {
+            sessions: number;
+            duration: number;
+        };
+    };
+}
+
+export default function PracticeAnalysis({
+    distribution,
+}: PracticeAnalysisProps) {
     const { colors, isDark } = useTheme()
-    const styles = getProgressInsightsStyles(colors)
+    const styles = getProgressInsightsStyles(colors);
+    const totalDuration =
+    (distribution?.mudra?.duration ?? 0) +
+    (distribution?.nidra?.duration ?? 0);
+
+const formatDuration = (seconds: number) => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+
+    if (hours > 0) {
+        return `${hours}h ${minutes}m`;
+    }
+
+    return `${minutes}m`;
+};
+
+const LEGEND = [
+    {
+        name: 'Mudra Meditation',
+        time: formatDuration(distribution?.mudra?.duration ?? 0),
+        percent:
+            totalDuration > 0
+                ? `${Math.round(
+                      ((distribution?.mudra?.duration ?? 0) / totalDuration) *
+                          100
+                  )}%`
+                : '0%',
+        color: '#9A85FE',
+    },
+    {
+        name: 'Yoga Nidra',
+        time: formatDuration(distribution?.nidra?.duration ?? 0),
+        percent:
+            totalDuration > 0
+                ? `${Math.round(
+                      ((distribution?.nidra?.duration ?? 0) / totalDuration) *
+                          100
+                  )}%`
+                : '0%',
+        color: '#C6BAFF',
+    },
+];
+const SEGMENTS = [
+    {
+        percent:
+            totalDuration > 0
+                ? (distribution?.mudra?.duration ?? 0) / totalDuration
+                : 0,
+        color: '#9A85FE',
+    },
+    {
+        percent:
+            totalDuration > 0
+                ? (distribution?.nidra?.duration ?? 0) / totalDuration
+                : 0,
+        color: '#C6BAFF',
+    },
+];
+const mostPracticed =
+    (distribution?.mudra?.duration ?? 0) >=
+    (distribution?.nidra?.duration ?? 0)
+        ? 'Mudra Meditation'
+        : 'Yoga Nidra';
     return (
         <View style={styles.analysisContainer}>
             <View style={styles.sectionHeaderRow}>
@@ -106,7 +189,10 @@ export default function PracticeAnalysis() {
             <View style={styles.analysisCard}>
                 <View style={styles.analysisInner}>
                     <View style={styles.donutWrapper}>
-                        <DonutChart textColor={colors.text} />
+                        <DonutChart
+                            textColor={colors.text}
+                            segments={SEGMENTS}
+                        />
                         <View style={styles.donutLabelWrapper}>
                             {isDark
                                 ? <LotusWhite width={28} height={28} />
@@ -132,9 +218,9 @@ export default function PracticeAnalysis() {
                 </View>
 
                 <View style={styles.analysisFooter}>
-                    <Text style={styles.analysisFooterText}>
-                        You practice Mudra Meditation the most.
-                    </Text>
+                   <Text style={styles.analysisFooterText}>
+                    You practice {mostPracticed} the most.
+                </Text>
                 </View>
             </View>
         </View>

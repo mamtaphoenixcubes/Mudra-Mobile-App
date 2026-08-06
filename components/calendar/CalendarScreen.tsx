@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { getCalendarStyles } from '@/assets/styles/calendar/calendarStyles';
 import { useTheme } from '@/constants/ThemeContext';
 import { useStreakStore, getCompletedDatesSet } from '@/store/streakStore';
+import { useProgressInsightStore } from '@/store/progressInsightStore';
 
 const WEEKDAY_HEADERS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 const MONTH_NAMES = [
@@ -14,13 +15,15 @@ const MONTH_NAMES = [
 ];
 
 function dateKey(year: number, month: number, day: number): string {
-    const d = new Date(year, month, day);
-    return d.toISOString().slice(0, 10);
+    const m = String(month + 1).padStart(2, '0');
+    const d = String(day).padStart(2, '0');
+
+    return `${year}-${m}-${d}`;
 }
 
 function buildMonthGrid(year: number, month: number) {
     const firstOfMonth = new Date(year, month, 1);
-    const firstWeekday = (firstOfMonth.getDay() + 6) % 7; 
+   const firstWeekday = (firstOfMonth.getDay() + 6) % 7;
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     const daysInPrevMonth = new Date(year, month, 0).getDate();
 
@@ -53,22 +56,48 @@ export default function CalendarScreen() {
     const { colors } = useTheme();
     const styles = getCalendarStyles(colors);
 
-    const events = useStreakStore((s) => s.events);
-    const completedDates = getCompletedDatesSet(events);
 
-    const today = new Date();
-    const [viewDate, setViewDate] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
+const { overview } = useProgressInsightStore();
+console.log(overview,"adaw");
 
+    const completedDates = new Set(
+    (overview?.calendar?.calendar ?? [])
+        .filter(item => item.completed)
+        .map(item => item.date)
+);
+
+const apiToday = overview?.calendar?.today;
+
+const today = apiToday ? new Date(apiToday) : new Date();
+
+const [viewDate, setViewDate] = useState(
+    new Date(today.getFullYear(), today.getMonth(), 1)
+);
+
+const [selectedDate, setSelectedDate] = useState<string | null>(
+    overview?.calendar?.today ?? null
+);
+const calendarData = overview?.calendar?.calendar ?? [];
+
+const calendarMap = new Map(
+    calendarData.map(item => [item.date, item])
+);
+
+const selectedDay = selectedDate
+    ? calendarMap.get(selectedDate)
+    : undefined;
     const year = viewDate.getFullYear();
     const month = viewDate.getMonth();
     const weeks = buildMonthGrid(year, month);
 
-    const todayKey = today.toISOString().slice(0, 10);
+   const todayKey = dateKey(
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate()
+);
 
-    const completedCountThisMonth = Array.from(completedDates).filter((key) => {
-        const d = new Date(key);
-        return d.getFullYear() === year && d.getMonth() === month;
-    }).length;
+    const completedCountThisMonth =
+    overview?.calendar?.totalDays ?? 0;
 
     const goToPrevMonth = () => setViewDate(new Date(year, month - 1, 1));
     const goToNextMonth = () => setViewDate(new Date(year, month + 1, 1));
@@ -117,13 +146,23 @@ export default function CalendarScreen() {
 
                                 return (
                                     <View key={ci} style={styles.dayCell}>
-                                        <View
-                                            style={[
-                                                styles.dayCircle,
-                                                isCompleted && styles.dayCircleCompleted,
-                                                isToday && !isCompleted && styles.dayCircleToday,
-                                            ]}
-                                        >
+                                      <TouchableOpacity
+    activeOpacity={0.7}
+    onPress={() => {
+        if (cell.inCurrentMonth) {
+            setSelectedDate(key);
+        }
+    }}
+    style={[
+        styles.dayCircle,
+        isCompleted && styles.dayCircleCompleted,
+        isToday && !isCompleted && styles.dayCircleToday,
+        selectedDate === key && {
+            borderWidth: 2,
+            borderColor: colors.primary,
+        },
+    ]}
+>
                                             <Text
                                                 style={[
                                                     styles.dayText,
@@ -133,7 +172,7 @@ export default function CalendarScreen() {
                                             >
                                                 {cell.day}
                                             </Text>
-                                        </View>
+                                       </TouchableOpacity>
                                     </View>
                                 );
                             })}

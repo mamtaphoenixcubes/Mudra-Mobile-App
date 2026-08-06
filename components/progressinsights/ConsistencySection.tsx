@@ -9,13 +9,42 @@ import { router } from 'expo-router';
 
 const DAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
-export default function ConsistencySection() {
+interface ConsistencySectionProps {
+    overview?: {
+        currentStreak: number;
+        calendar?: {
+            calendar: {
+                date: string;
+                completed: boolean;
+                sessions: any[];
+            }[];
+        };
+    };
+}
+
+export default function ConsistencySection({
+    overview,
+}: ConsistencySectionProps) {
     const { colors } = useTheme()
     const styles = getProgressInsightsStyles(colors)
 
-    const events = useStreakStore((s) => s.events);
-    const currentStreak = getCurrentStreak(events);
-    const weekCompletionMap = getWeekCompletionMap(events);
+ 
+
+    const calendar = overview?.calendar?.calendar ?? [];
+
+const weekCompletionMap = Array(7).fill(false);
+
+calendar.forEach((item) => {
+    const date = new Date(item.date);
+
+    // JS: Sunday=0 ... Saturday=6
+    // Convert to Monday=0 ... Sunday=6
+    const dayIndex = (date.getDay() + 6) % 7;
+
+    weekCompletionMap[dayIndex] = item.completed;
+});
+
+const currentStreak = overview?.currentStreak ?? 0;
 
     return (
         <View style={styles.consistencyContainer}>
@@ -32,7 +61,9 @@ export default function ConsistencySection() {
                     <Text style={styles.streakLabel}>Current Streak</Text>
                     <View style={styles.streakCircle}>
                         <FireSvg width={20} height={20} />
-                        <Text style={styles.streakValue}>{currentStreak}</Text>
+                        <Text style={styles.streakValue}>
+                            {overview?.currentStreak ?? 0}
+                        </Text>
                         <Text style={styles.streakDaysText}>Days</Text>
                     </View>
                 </View>
