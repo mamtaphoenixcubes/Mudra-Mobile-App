@@ -70,7 +70,7 @@ export default function MudraSessionPlayer() {
     );
     const [audioDuration, setAudioDuration] = useState(0);
 
-    const { mediaId, id, playlistId, passduration } = useLocalSearchParams()
+    const { mediaId, id, playlistId, passduration, selectedMediaType } = useLocalSearchParams()
     const timerDuration = passduration ? Number(passduration) : 0
     const audioPlaylists = usePlaylistStore((s) => s.audioPlaylists);
     const videoPlaylists = usePlaylistStore((s) => s.videoPlaylists);
@@ -91,7 +91,15 @@ export default function MudraSessionPlayer() {
     const mudra = selectedMudra?.data ?? selectedMudra;
     console.log(mudra, "selectedMudraselectedMudra");
 
+    // const mediaType =
+    //     mudra?.mediaType ??
+    //     (localPlaylist?.audios
+    //         ? 'AUDIO_PLAYLIST'
+    //         : localPlaylist?.videos
+    //             ? 'VIDEO_PLAYLIST'
+    //             : undefined);
     const mediaType =
+        (selectedMediaType as string | undefined) ??
         mudra?.mediaType ??
         (localPlaylist?.audios
             ? 'AUDIO_PLAYLIST'
@@ -139,11 +147,22 @@ export default function MudraSessionPlayer() {
 
     const [currentIndex, setCurrentIndex] =
         useState(initialIndex);
+    // const singleItem =
+    //     mediaType === 'AUDIO_SINGLE'
+    //         ? mudra?.audioSingleSessions?.[0]
+    //         : mediaType === 'VIDEO_SINGLE'
+    //             ? mudra?.videoSingleSessions?.[0]
+    //             : null;
+
     const singleItem =
         mediaType === 'AUDIO_SINGLE'
-            ? mudra?.audioSingleSessions?.[0]
+            ? (mudra?.audioSingleSessions?.find(
+                (item: any) => String(item.documentId) === String(mediaId)
+            ) || mudra?.audioSingleSessions?.[0])
             : mediaType === 'VIDEO_SINGLE'
-                ? mudra?.videoSingleSessions?.[0]
+                ? (mudra?.videoSingleSessions?.find(
+                    (item: any) => String(item.documentId) === String(mediaId)
+                ) || mudra?.videoSingleSessions?.[0])
                 : null;
 
     const isAudio = mediaType === 'AUDIO_SINGLE' || mediaType === 'AUDIO_PLAYLIST';

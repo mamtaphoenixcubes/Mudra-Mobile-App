@@ -27,7 +27,9 @@ import { useAuthStore } from '@/store/authStore';
 import ConfirmModal from '@/components/common/ConfirmModal';
 import { useTheme } from '@/constants/ThemeContext'
 
-const { width } = Dimensions.get('window');
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const moderateScale = (size: number, factor = 0.5) =>
+  size + ((SCREEN_WIDTH - 375) / 375) * size * factor;
 
 // ── Data ──────────────────────────────────────────────────────────────────────
 
@@ -58,6 +60,13 @@ export default function More() {
     (state) => state.logout
   );
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+
+  const { isLoggedIn, token, user } = useAuthStore();
+  const loggedIn = isLoggedIn && !!token && !!user;
+
+  const handleLogin = () => {
+    router.push('/auth/login');
+  };
 
   const handlePress = (id: string) => {
     if (id === 'help') {
@@ -185,18 +194,20 @@ export default function More() {
       <TouchableOpacity
         style={styles.logoutBtn}
         activeOpacity={0.85}
-        onPress={handleLogout}
+        //onPress={handleLogout}
+        onPress={loggedIn ? handleLogout : handleLogin}
       >
 
         <Ionicons
-          name="log-out-outline"
-          size={22}
+          //name="log-out-outline"
+          name={loggedIn ? 'log-out-outline' : 'log-in-outline'}
+          size={moderateScale(22)}
           color="#FFFFFF"
           style={styles.logoutIcon}
         />
 
         <Text style={styles.logoutText}>
-          Log Out
+          {loggedIn ? 'Log Out' : 'Log In'}
         </Text>
 
       </TouchableOpacity>
@@ -224,7 +235,7 @@ export default function More() {
 
 // ── Styles ────────────────────────────────────────────────────────────────────
 
-const H_PAD = width * 0.045;
+const H_PAD = SCREEN_WIDTH * 0.045;
 
 const styles = StyleSheet.create({
 

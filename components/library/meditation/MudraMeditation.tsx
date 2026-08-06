@@ -173,7 +173,8 @@ export default function MudraMeditation() {
             case 'VIDEO_SINGLE':
             case 'VIDEO_PLAYLIST':
                 router.push({
-                    pathname: '/mudrasessionplayer',
+                    //pathname: '/mudrasessionplayer',
+                    pathname: '/practicemode',
                     params: {
                         id: mudra?.documentId,
                         passduration: selectedDuration,

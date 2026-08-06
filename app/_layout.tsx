@@ -39,6 +39,8 @@ export default function RootLayout() {
               <Stack.Screen name="mudrameditation" options={{ headerShown: false }} />
               <Stack.Screen name="sessionplayer" options={{ headerShown: false }} />
               <Stack.Screen name="mudrasessionplayer" options={{ headerShown: false }} />
+               <Stack.Screen name="moodresults" options={{ headerShown: false }} />
+               <Stack.Screen name="practicemode" options={{ headerShown: false }} />
 
               <Stack.Screen name="needdetail" options={{ headerShown: false }} />
               <Stack.Screen name="elementtracker" options={{ headerShown: false }} />

@@ -1,12 +1,11 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, Image, Dimensions } from 'react-native';
-// import { slideMenuStyles as styles } from '@/assets/styles/slidemenu/slideMenuStyles';
 import { getSlideMenuStyles } from '@/assets/styles/slidemenu/slideMenuStyles'
 import { useTheme } from '@/constants/ThemeContext'
 import { Ionicons } from '@expo/vector-icons';
 import Svg, { Path } from 'react-native-svg';
-import { SafeAreaView } from 'react-native-safe-area-context';
-
+// import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const MENU_WIDTH = SCREEN_WIDTH * 0.78;
@@ -25,11 +24,14 @@ export default function SlideMenuHeader({
 }: SlideMenuHeaderProps) {
     const { colors } = useTheme()
     const styles = getSlideMenuStyles(colors)
+    const insets = useSafeAreaInsets();
     return (
-        <SafeAreaView edges={['top']} style={{ backgroundColor: '#9A85FE' }}>
+        // <SafeAreaView edges={['top']} style={{ backgroundColor: '#9A85FE' }}>
+        <View style={{ backgroundColor: '#9A85FE' }}>
             <View>
                 {/* Purple header */}
-                <View style={styles.header}>
+                {/* <View style={styles.header}> */}
+                <View style={[styles.header, { paddingTop: styles.header.paddingTop + insets.top }]}>
                     {onClose && (
                         <TouchableOpacity
                             style={styles.closeButton}
@@ -83,6 +85,7 @@ export default function SlideMenuHeader({
                     />
                 </Svg>
             </View>
-        </SafeAreaView>
+            {/* </SafeAreaView> */}
+        </View>
     );
 }

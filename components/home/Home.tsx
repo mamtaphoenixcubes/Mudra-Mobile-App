@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { SvgUri } from 'react-native-svg';
 import { useTheme } from '@/constants/ThemeContext';
+import { router } from 'expo-router';
 
 const { width } = Dimensions.get('window');
 
@@ -88,6 +89,16 @@ export default function Home({ moods, loading, error }: HomeProps) {
                   { backgroundColor: item?.colorCode || '#EEE' },
                 ]}
                 activeOpacity={0.75}
+                onPress={() =>
+        router.push({
+            pathname: '/moodresults',
+            params: {
+                moodId: item.id,
+                moodName: item.name,
+                colorCode: item.colorCode,
+            },
+        })
+    }
               >
                 <SvgUri
                   uri={imageUrl}
