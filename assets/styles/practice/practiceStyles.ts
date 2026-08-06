@@ -22,7 +22,7 @@ export const getPracticeStyles = (colors: typeof lightColors) =>
         // ── Page Title ──────────────────────────────────────────
         pageTitle: {
             fontFamily: 'SF-Pro-Display',
-            fontWeight: '700',
+            fontWeight: '600',
             fontSize: moderateScale(20),
             // color: '#0F0F0F',
             color: colors.text,
