@@ -1,11 +1,10 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { getCalendarStyles } from '@/assets/styles/calendar/calendarStyles';
 import { useTheme } from '@/constants/ThemeContext';
-import { useStreakStore, getCompletedDatesSet } from '@/store/streakStore';
 import { useProgressInsightStore } from '@/store/progressInsightStore';
 
 const WEEKDAY_HEADERS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
@@ -56,45 +55,68 @@ export default function CalendarScreen() {
     const { colors } = useTheme();
     const styles = getCalendarStyles(colors);
 
+    const { overview } = useProgressInsightStore();
 
-const { overview } = useProgressInsightStore();
-console.log(overview,"adaw");
+    const calendarData = useMemo(
+        () => overview?.calendar?.calendar ?? [],
+        [overview?.calendar?.calendar]
+    );
 
-    const completedDates = new Set(
-    (overview?.calendar?.calendar ?? [])
-        .filter(item => item.completed)
-        .map(item => item.date)
-);
+    const completedDates = useMemo(
+        () =>
+            new Set(
+                calendarData
+                    .filter((item :any) => item.completed)
+                    .map((item :any) => item.date)
+            ),
+        [calendarData]
+    );
 
-const apiToday = overview?.calendar?.today;
+    const apiToday = overview?.calendar?.today;
 
-const today = apiToday ? new Date(apiToday) : new Date();
+    const today = apiToday ? new Date(apiToday) : new Date();
 
-const [viewDate, setViewDate] = useState(
-    new Date(today.getFullYear(), today.getMonth(), 1)
-);
+    const [viewDate, setViewDate] = useState(
+        new Date(today.getFullYear(), today.getMonth(), 1)
+    );
 
-const [selectedDate, setSelectedDate] = useState<string | null>(
-    overview?.calendar?.today ?? null
-);
-const calendarData = overview?.calendar?.calendar ?? [];
+    const [selectedDate, setSelectedDate] = useState<string | null>(
+        overview?.calendar?.today ?? null
+    );
 
-const calendarMap = new Map(
-    calendarData.map(item => [item.date, item])
-);
+    useEffect(() => {
+        if (!selectedDate && overview?.calendar?.today) {
+            setSelectedDate(overview.calendar.today);
+        }
+    }, [overview?.calendar?.today, selectedDate]);
 
-const selectedDay = selectedDate
-    ? calendarMap.get(selectedDate)
-    : undefined;
+    const calendarMap = useMemo(
+        () => new Map(calendarData.map((item :any) => [item.date, item])),
+        [calendarData]
+    );
+
+    const selectedDay = useMemo(
+        () => (selectedDate ? calendarMap.get(selectedDate) : undefined),
+        [calendarMap, selectedDate]
+    );
+
+    const selectedDateLabel = selectedDate
+        ? new Date(selectedDate).toLocaleDateString('en-US', {
+              day: 'numeric',
+              month: 'short',
+              year: 'numeric',
+          })
+        : null;
+
     const year = viewDate.getFullYear();
     const month = viewDate.getMonth();
     const weeks = buildMonthGrid(year, month);
 
-   const todayKey = dateKey(
-    today.getFullYear(),
-    today.getMonth(),
-    today.getDate()
-);
+    const todayKey = dateKey(
+        today.getFullYear(),
+        today.getMonth(),
+        today.getDate()
+    );
 
     const completedCountThisMonth =
     overview?.calendar?.totalDays ?? 0;
@@ -146,23 +168,23 @@ const selectedDay = selectedDate
 
                                 return (
                                     <View key={ci} style={styles.dayCell}>
-                                      <TouchableOpacity
-    activeOpacity={0.7}
-    onPress={() => {
-        if (cell.inCurrentMonth) {
-            setSelectedDate(key);
-        }
-    }}
-    style={[
-        styles.dayCircle,
-        isCompleted && styles.dayCircleCompleted,
-        isToday && !isCompleted && styles.dayCircleToday,
-        selectedDate === key && {
-            borderWidth: 2,
-            borderColor: colors.primary,
-        },
-    ]}
->
+                                        <TouchableOpacity
+                                            activeOpacity={0.7}
+                                            onPress={() => {
+                                                if (cell.inCurrentMonth) {
+                                                    setSelectedDate(key);
+                                                }
+                                            }}
+                                            style={[
+                                                styles.dayCircle,
+                                                isCompleted && styles.dayCircleCompleted,
+                                                isToday && !isCompleted && styles.dayCircleToday,
+                                                selectedDate === key && {
+                                                    borderWidth: 2,
+                                                    borderColor: colors.primary,
+                                                },
+                                            ]}
+                                        >
                                             <Text
                                                 style={[
                                                     styles.dayText,
@@ -172,7 +194,7 @@ const selectedDay = selectedDate
                                             >
                                                 {cell.day}
                                             </Text>
-                                       </TouchableOpacity>
+                                        </TouchableOpacity>
                                     </View>
                                 );
                             })}
@@ -198,6 +220,40 @@ const selectedDay = selectedDate
                         {completedCountThisMonth} session{completedCountThisMonth === 1 ? '' : 's'} completed in {MONTH_NAMES[month]}
                     </Text>
                 </View>
+            </View>
+            <View style={styles.activitiesContainer}>
+                <Text style={styles.activitiesTitle}>
+                    {selectedDate
+                        ? `Activities on ${selectedDateLabel}`
+                        : 'Select a date'}
+                </Text>
+
+                {!selectedDay?.sessions?.length ? (
+                    <Text style={styles.noActivityText}>
+                        No activities found
+                    </Text>
+                ) : (
+                    selectedDay.sessions.map((session, index) => (
+                        <View
+                            key={index}
+                            style={styles.activityCard}
+                        >
+                            <View style={{ flex: 1 }}>
+                                <Text style={styles.activityTitle} numberOfLines={1}>
+                                    {session.title}
+                                </Text>
+
+                                <Text style={styles.activitySubtitle} numberOfLines={1}>
+                                    {session.practiceType} • {session.sessionType}
+                                </Text>
+                            </View>
+
+                            <Text style={styles.activityDuration}>
+                                {Math.floor(session.sessionDuration / 60)} min
+                            </Text>
+                        </View>
+                    ))
+                )}
             </View>
         </View>
     );

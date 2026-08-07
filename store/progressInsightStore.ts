@@ -15,7 +15,7 @@ interface ProgressInsightStore {
     profileDocumentId: string;
     goalType: string;
     goalValue: number;
-    goalPeriod: string;
+    resetType: string;
   }) => Promise<void>;
 
   fetchGoal: (

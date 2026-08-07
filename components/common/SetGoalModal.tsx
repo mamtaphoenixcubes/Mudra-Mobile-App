@@ -13,6 +13,8 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/constants/ThemeContext';
 import { useGoalStore, type GoalType } from '@/store/goalStore';
+import { useAuthStore } from '@/store/authStore';
+import { useProgressInsightStore } from '@/store/progressInsightStore';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const moderateScale = (size: number, factor = 0.5) =>
@@ -29,30 +31,56 @@ interface SetGoalModalProps {
 export default function SetGoalModal({ visible, onClose }: SetGoalModalProps) {
     const { colors } = useTheme();
     const goalType = useGoalStore((s) => s.goalType);
-    const targetValue = useGoalStore((s) => s.targetValue);
-    const setGoal = useGoalStore((s) => s.setGoal);
+  const { user } = useAuthStore();
+type GoalPeriod = 'DAILY' | 'WEEKLY' | 'MONTHLY';
+
+const [resetType, setResetType] = useState<GoalPeriod>('WEEKLY');
+const profileDocumentId =
+    user?.id ||
+    user?.profileDocumentId;
+
+const {
+    goal,
+    createGoal,
+    fetchGoal,
+} = useProgressInsightStore();
 
     const [selectedType, setSelectedType] = useState<GoalType>('sessions');
     const [inputValue, setInputValue] = useState('5');
 
     // Pre-fill from the existing goal (if any) each time the modal opens.
-    useEffect(() => {
-        if (visible) {
-            setSelectedType(goalType ?? 'sessions');
-            setInputValue(String(targetValue ?? 5));
-        }
-    }, [visible, goalType, targetValue]);
+
 
     const parsed = parseInt(inputValue, 10);
     const isValid = !Number.isNaN(parsed) && parsed >= MIN_TARGET && parsed <= MAX_TARGET;
 
-    const handleSave = () => {
-        if (!isValid) return;
-        setGoal(selectedType, parsed);
-        onClose();
-    };
+const handleSave = async () => {
+    if (!isValid || !profileDocumentId) return;
 
-    const unitLabel = selectedType === 'sessions' ? 'sessions / week' : 'minutes / week';
+    await createGoal({
+        profileDocumentId,
+        goalType:
+            selectedType === 'sessions'
+                ? 'SESSION_COUNT'
+                : 'DURATION',
+        goalValue:
+            selectedType === 'minutes'
+                ? parsed * 60
+                : parsed,
+        resetType,
+    });
+
+    await fetchGoal(profileDocumentId);
+
+    onClose();
+};
+
+    const periodLabel =
+    resetType === 'DAILY'
+        ? 'day'
+        : resetType === 'MONTHLY'
+        ? 'month'
+        : 'week';
 
     return (
         <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
@@ -128,7 +156,49 @@ export default function SetGoalModal({ visible, onClose }: SetGoalModalProps) {
                                 keyboardType="number-pad"
                                 maxLength={3}
                             />
-                            <Text style={[styles.inputSuffix, { color: colors.textSub }]}>{unitLabel}</Text>
+                           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+    <Text style={[styles.inputSuffix, { color: colors.textSub }]}>
+        {selectedType === 'sessions' ? 'sessions / ' : 'minutes / '}
+    </Text>
+
+   <TouchableOpacity
+    onPress={() => {
+        setResetType((prev) => {
+            switch (prev) {
+                case 'WEEKLY':
+                    return 'MONTHLY';
+                case 'MONTHLY':
+                    return 'DAILY';
+                default:
+                    return 'WEEKLY';
+            }
+        });
+    }}
+    style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+    }}
+>
+    <Text
+        style={[
+            styles.inputSuffix,
+            {
+                color: '#9A85FE',
+                fontWeight: '600',
+            },
+        ]}
+    >
+        {periodLabel}
+    </Text>
+
+    <Ionicons
+        name="swap-horizontal"
+        size={14}
+        color="#9A85FE"
+        style={{ marginLeft: 4 }}
+    />
+</TouchableOpacity>
+</View>
                         </View>
 
                         {!isValid && (

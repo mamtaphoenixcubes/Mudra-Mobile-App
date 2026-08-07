@@ -1,5 +1,5 @@
-import React, { useState,useEffect } from 'react';
-import { View, ScrollView, Text } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, ScrollView, Text, RefreshControl } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getProgressInsightsStyles } from '@/assets/styles/progressinsights/progressInsightsStyles'
 import { useTheme } from '@/constants/ThemeContext'
@@ -20,30 +20,57 @@ export default function ProgressInsightsScreen() {
     const { colors } = useTheme()
     const styles = getProgressInsightsStyles(colors)
   const { user } = useAuthStore();
-
+const [refreshing, setRefreshing] = useState(false);
     const profileDocumentId =
         user?.id ||
         user?.profileDocumentId;
     const [activeTab, setActiveTab] = useState<ProgressTab>('All');
 const { goal, overview, summary, distribution,analytics, loading,createGoal,fetchGoal,fetchOverview,fetchSummary,fetchDistribution,fetchAnalytics,} = useProgressInsightStore();
+const loadData = useCallback(async () => {
+    if (!profileDocumentId) return;
+
+    await Promise.all([
+        fetchGoal(profileDocumentId),
+        fetchOverview(profileDocumentId),
+        fetchSummary(profileDocumentId),
+        fetchDistribution(profileDocumentId),
+        fetchAnalytics(profileDocumentId),
+    ]);
+}, [
+    profileDocumentId,
+    fetchGoal,
+    fetchOverview,
+    fetchSummary,
+    fetchDistribution,
+    fetchAnalytics,
+]);
 useEffect(() => {
-  if (!profileDocumentId) return;
+    loadData();
+}, [loadData]);
+const onRefresh = useCallback(async () => {
+    setRefreshing(true);
 
-  fetchGoal(profileDocumentId);
-  fetchOverview(profileDocumentId);
-  fetchSummary(profileDocumentId);
-  fetchDistribution(profileDocumentId);
-  fetchAnalytics(profileDocumentId);
-}, [profileDocumentId]);
-console.log(overview,"sumaryyyyyyyy");
-
+    try {
+        await loadData();
+    } finally {
+        setRefreshing(false);
+    }
+}, [loadData]);
     return (
         <View style={styles.screen}>
             <ProgressHeader />
-            <ScrollView
-                showsVerticalScrollIndicator={false}
-                contentContainerStyle={{ paddingBottom: insets.bottom + 120 }}
-            >
+       <ScrollView
+    showsVerticalScrollIndicator={false}
+    contentContainerStyle={{ paddingBottom: insets.bottom + 120 }}
+    refreshControl={
+        <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[colors.primary]}
+            tintColor={colors.primary}
+        />
+    }
+>
                 <Text style={styles.pageTitle}>Progress Insights</Text>
                 <Text style={styles.subtitle}>
                     Track your journey. Celebrate your growth.
@@ -55,8 +82,8 @@ console.log(overview,"sumaryyyyyyyy");
                          <OverallProgress summary={summary} />
                         <PracticeAnalysis distribution={distribution} />
                        <ConsistencySection overview={overview} />
-                        <AnalyticsSection />
-                        <GoalBanner />
+                         <AnalyticsSection analytics={analytics} />
+                        <GoalBanner analytics={analytics} />
                     </>
                 )}
 

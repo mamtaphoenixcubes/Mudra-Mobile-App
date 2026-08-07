@@ -19,67 +19,74 @@ import {
 import { useGoalStore, getGoalProgress } from '@/store/goalStore';
 import TimeRangeDropdown, { type TimeRange, timeRangeLabel } from '@/components/common/TimeRangeDropdown';
 
-export default function AnalyticsSection() {
+interface AnalyticsSectionProps {
+    analytics: any;
+}
+
+export default function AnalyticsSection({
+    analytics,
+}: AnalyticsSectionProps) {
     const { colors, isDark } = useTheme()
     const styles = getProgressInsightsStyles(colors)
 
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const [range, setRange] = useState<TimeRange>('week');
 
-    const events = useStreakStore((s) => s.events);
+   const averageSession =
+    analytics?.averageSessionDuration?.formatted ?? '--';
 
-    // The dropdown only controls "Average Session Duration"'s window —
-    // "Increase vs Last Week" is inherently a weekly comparison by its own
-    // label, and "Goals Completed" always reflects the current goal's own
-    // weekly progress, so neither changes with this selector.
-    const rangeStats =
-        range === 'week' ? getThisWeekStats(events)
-            : range === 'month' ? getThisMonthStats(events)
-                : getAllTimeStats(events);
+const weeklyComparison = analytics?.weeklyComparison;
 
-    const averageSessionMinutes = rangeStats.sessionCount > 0
-        ? Math.round(rangeStats.totalMinutes / rangeStats.sessionCount)
-        : 0;
+const goalCompletion = analytics?.goalCompletion;
 
-    const weekChange = getWeekOverWeekChange(events);
+const changeColor =
+    weeklyComparison?.trend === 'UP'
+        ? '#2E7D32'
+        : weeklyComparison?.trend === 'DOWN'
+        ? '#C62828'
+        : colors.text;
 
-    const goalType = useGoalStore((s) => s.goalType);
-    const targetValue = useGoalStore((s) => s.targetValue);
-    const progress = getGoalProgress(goalType, targetValue, events);
+const changeValue =
+    weeklyComparison?.trend === 'UP'
+        ? `+${weeklyComparison?.percentage ?? 0}%`
+        : weeklyComparison?.trend === 'DOWN'
+        ? `-${weeklyComparison?.percentage ?? 0}%`
+        : 'No Change';
 
-    const changeColor =
-        !weekChange || weekChange.direction === 'same'
-            ? colors.text
-            : weekChange.direction === 'increase'
-                ? '#2E7D32' // green
-                : '#C62828'; // red
-
-    const changeValue = !weekChange
-        ? 'New'
-        : weekChange.direction === 'same'
-            ? 'No change'
-            : `${weekChange.direction === 'increase' ? '+' : ''}${weekChange.percent}%`;
+const goalValue = goalCompletion?.hasGoal
+  ? `${goalCompletion.completed === false ? 0 : (goalCompletion.completed ?? 0)} / ${
+      goalCompletion.goalType === 'DURATION'
+        ? goalCompletion.target / 60
+        : goalCompletion.target
+    }`
+  : 'Not Set';
 
     const STATS = [
-        {
-            icon: isDark ? <ClockWhite width={26} height={26} /> : <ClockSvg width={26} height={26} />,
-            value: rangeStats.sessionCount > 0 ? `${averageSessionMinutes} min` : '—',
-            label: 'Average Session\nDuration',
-            valueColor: colors.text,
-        },
-        {
-            icon: isDark ? <GroupWhite width={26} height={26} /> : <BeginnerSvg width={26} height={26} />,
-            value: changeValue,
-            label: 'Increase vs Last\nWeek',
-            valueColor: changeColor,
-        },
-        {
-            icon: isDark ? <ElementalLogicWhite width={26} height={26} /> : <ElementalLogicSvg width={26} height={26} />,
-            value: progress ? `${progress.current} / ${progress.target}` : 'Not set',
-            label: 'Goals\nCompleted',
-            valueColor: colors.text,
-        },
-    ]
+    {
+        icon: isDark
+            ? <ClockWhite width={26} height={26} />
+            : <ClockSvg width={26} height={26} />,
+        value: averageSession,
+        label: 'Average Session\nDuration',
+        valueColor: colors.text,
+    },
+    {
+        icon: isDark
+            ? <GroupWhite width={26} height={26} />
+            : <BeginnerSvg width={26} height={26} />,
+        value: changeValue,
+        label: 'Increase vs Last\nWeek',
+        valueColor: changeColor,
+    },
+    {
+        icon: isDark
+            ? <ElementalLogicWhite width={26} height={26} />
+            : <ElementalLogicSvg width={26} height={26} />,
+        value: goalValue,
+        label: 'Goals\nCompleted',
+        valueColor: colors.text,
+    },
+];
     return (
         <View style={styles.analyticsContainer}>
             <View style={styles.sectionHeaderRow}>

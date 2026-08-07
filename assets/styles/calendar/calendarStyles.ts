@@ -176,4 +176,46 @@ export const getCalendarStyles = (colors: typeof lightColors) =>
             color: colors.text,
             textAlign: 'center',
         },
+        activitiesContainer: {
+    marginHorizontal: 20,
+    marginTop: 20,
+},
+
+activitiesTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    marginBottom: 12,
+},
+
+activityCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 14,
+    borderRadius: 12,
+    backgroundColor: colors.card,
+    marginBottom: 10,
+},
+
+activityTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+},
+
+activitySubtitle: {
+    fontSize: 13,
+    opacity: 0.7,
+    marginTop: 3,
+},
+
+activityDuration: {
+    fontSize: 14,
+    fontWeight: '600',
+},
+
+noActivityText: {
+    textAlign: 'center',
+    opacity: 0.6,
+    marginTop: 12,
+},
     });
