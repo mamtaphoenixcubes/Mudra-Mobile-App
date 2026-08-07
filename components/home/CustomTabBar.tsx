@@ -1,11 +1,12 @@
 import React from 'react'
-import { View, TouchableOpacity, Text, StyleSheet, Dimensions } from 'react-native'
+import { View, TouchableOpacity, Text, StyleSheet, Dimensions, Image } from 'react-native'
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs'
 import HomeSvg from '@/assets/icons/Home.svg'
 import LibrarySvg from '@/assets/icons/Library.svg'
 import PracticeSvg from '@/assets/icons/Practice.svg'
 import NidraSvg from '@/assets/icons/Nidra.svg'
 import ProfileSvg from '@/assets/icons/Profile.svg'
+import { useAuthStore } from '@/store/authStore'
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window')
 
@@ -31,12 +32,29 @@ const TAB_LABELS: Record<string, string> = {
 const ICON_SIZE = moderateScale(24)
 
 export default function CustomTabBar({ state, navigation }: BottomTabBarProps) {
+
+  const user = useAuthStore((s) => s.user)
+
+  const profileImageUri = user?.profileImage?.url
+    ? (user.profileImage.url.startsWith('http')
+      ? user.profileImage.url
+      : `${process.env.EXPO_PUBLIC_IMAGE_API_URL}${user.profileImage.url}`)
+    : null
+
   return (
     <View style={styles.container}>
       {state.routes.map((route, index) => {
         const Icon = TAB_ICONS[route.name]
         const label = TAB_LABELS[route.name]
         if (!Icon || !label) return null
+        // const Icon = TAB_ICONS[route.name]
+        //         const defaultLabel = TAB_LABELS[route.name]
+        //         if (!Icon || !defaultLabel) return null
+
+        //         const label =
+        //             route.name === 'profile' && user?.fullName
+        //                 ? user.fullName.split(' ')[0]
+        //                 : defaultLabel
 
         const isFocused = state.index === index
 
@@ -47,18 +65,26 @@ export default function CustomTabBar({ state, navigation }: BottomTabBarProps) {
             style={styles.tab}
             activeOpacity={0.7}
           >
-            {/* <Icon
-              width={ICON_SIZE}
-              height={ICON_SIZE}
-              color="#FFFFFF"
-              opacity={isFocused ? 1 : 0.5}
-            /> */}
-            <Icon
-              width={route.name === 'practice' ? moderateScale(30) : ICON_SIZE}
-              height={route.name === 'practice' ? moderateScale(30) : ICON_SIZE}
-              color="#FFFFFF"
-              opacity={isFocused ? 1 : 0.5}
-            />
+            {route.name === 'profile' && profileImageUri ? (
+              <Image
+                source={{ uri: profileImageUri }}
+                style={{
+                  width: ICON_SIZE,
+                  height: ICON_SIZE,
+                  borderRadius: ICON_SIZE / 2,
+                  opacity: isFocused ? 1 : 0.5,
+                  borderWidth: isFocused ? 1.5 : 0,
+                  borderColor: '#FFFFFF',
+                }}
+              />
+            ) : (
+              <Icon
+                width={route.name === 'practice' ? moderateScale(30) : ICON_SIZE}
+                height={route.name === 'practice' ? moderateScale(30) : ICON_SIZE}
+                color="#FFFFFF"
+                opacity={isFocused ? 1 : 0.5}
+              />
+            )}
             <Text style={[styles.label, { opacity: isFocused ? 1 : 0.5 }]}>
               {label}
             </Text>

@@ -43,7 +43,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   setAuth: async (data) => {
     try {
-      
+
       const authData = {
         user: data.user,
         token: data.token,
@@ -81,35 +81,35 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 
-updateUser: async (partialUser) => {
-        try {
-            const currentUser = get().user;
-            const mergedUser = { ...currentUser, ...partialUser };
+  updateUser: async (partialUser) => {
+    try {
+      const currentUser = get().user;
+      const mergedUser = { ...currentUser, ...partialUser };
 
-            const authData = {
-                user: mergedUser,
-                token: get().token,
-                isLoggedIn: get().isLoggedIn,
-            };
+      const authData = {
+        user: mergedUser,
+        token: get().token,
+        isLoggedIn: get().isLoggedIn,
+      };
 
-            await AsyncStorage.setItem(
-                'auth',
-                JSON.stringify(authData)
-            );
+      await AsyncStorage.setItem(
+        'auth',
+        JSON.stringify(authData)
+      );
 
-            await AsyncStorage.setItem(
-                'user',
-                JSON.stringify(mergedUser)
-            );
+      await AsyncStorage.setItem(
+        'user',
+        JSON.stringify(mergedUser)
+      );
 
-            set({
-                user: mergedUser,
-                auth: authData,
-            });
-        } catch (error) {
-            console.log('Update User Error:', error);
-        }
-    },
+      set({
+        user: mergedUser,
+        auth: authData,
+      });
+    } catch (error) {
+      console.log('Update User Error:', error);
+    }
+  },
 
 
   fetchLikedMudras: async () => {

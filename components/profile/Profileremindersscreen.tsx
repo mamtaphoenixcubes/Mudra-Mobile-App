@@ -127,8 +127,16 @@ export default function ProfileRemindersScreen() {
         <View style={styles.avatarWrapper}>
 
           <Image
-            source={require('../../assets/images/tabIcons/profile-avatar.png')}
-            style={styles.avatarImage}
+            source={
+              user?.profileImage?.url
+                ? {
+                  uri: user.profileImage.url.startsWith('http')
+                    ? user.profileImage.url
+                    : `${process.env.EXPO_PUBLIC_IMAGE_API_URL}${user.profileImage.url}`,
+                }
+                : require('../../assets/images/tabIcons/profile-avatar.png')
+            }
+            style={user?.profileImage?.url ? styles.avatarImage : styles.avatarImagePlaceholder}
           />
 
         </View>
@@ -394,6 +402,13 @@ const styles = StyleSheet.create({
   },
 
   avatarImage: {
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    resizeMode: 'cover',
+  },
+
+  avatarImagePlaceholder: {
     width: 58,
     height: 32,
     borderRadius: 29,

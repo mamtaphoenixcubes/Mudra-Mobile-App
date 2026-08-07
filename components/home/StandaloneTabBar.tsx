@@ -6,6 +6,8 @@ import LibrarySvg from '@/assets/icons/Library.svg'
 import PracticeSvg from '@/assets/icons/Practice.svg'
 import NidraSvg from '@/assets/icons/Nidra.svg'
 import ProfileSvg from '@/assets/icons/Profile.svg'
+import { Image } from 'react-native'
+import { useAuthStore } from '@/store/authStore'
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window')
 
@@ -25,6 +27,13 @@ const ICON_SIZE = moderateScale(24)
 export default function StandaloneTabBar() {
     const router = useRouter()
     const pathname = usePathname()
+    const user = useAuthStore((s) => s.user)
+
+    const profileImageUri = user?.profileImage?.url
+        ? (user.profileImage.url.startsWith('http')
+            ? user.profileImage.url
+            : `${process.env.EXPO_PUBLIC_IMAGE_API_URL}${user.profileImage.url}`)
+        : null
 
     return (
         <View style={styles.container}>
@@ -41,18 +50,26 @@ export default function StandaloneTabBar() {
                         style={styles.tab}
                         activeOpacity={0.7}
                     >
-                        {/* <tab.Icon
-                            width={ICON_SIZE}
-                            height={ICON_SIZE}
-                            color="#FFFFFF"
-                            opacity={isFocused ? 1 : 0.5}
-                        /> */}
-                        <tab.Icon
-                            width={tab.name === 'practice' ? ICON_SIZE + moderateScale(6) : ICON_SIZE}
-                            height={tab.name === 'practice' ? ICON_SIZE + moderateScale(6) : ICON_SIZE}
-                            color="#FFFFFF"
-                            opacity={isFocused ? 1 : 0.5}
-                        />
+                        {tab.name === 'profile' && profileImageUri ? (
+                            <Image
+                                source={{ uri: profileImageUri }}
+                                style={{
+                                    width: ICON_SIZE,
+                                    height: ICON_SIZE,
+                                    borderRadius: ICON_SIZE / 2,
+                                    opacity: isFocused ? 1 : 0.5,
+                                    borderWidth: isFocused ? 1.5 : 0,
+                                    borderColor: '#FFFFFF',
+                                }}
+                            />
+                        ) : (
+                            <tab.Icon
+                                width={tab.name === 'practice' ? ICON_SIZE + moderateScale(6) : ICON_SIZE}
+                                height={tab.name === 'practice' ? ICON_SIZE + moderateScale(6) : ICON_SIZE}
+                                color="#FFFFFF"
+                                opacity={isFocused ? 1 : 0.5}
+                            />
+                        )}
                         <Text style={[styles.label, { opacity: isFocused ? 1 : 0.5 }]}>
                             {tab.label}
                         </Text>

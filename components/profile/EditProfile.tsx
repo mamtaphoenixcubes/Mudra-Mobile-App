@@ -51,13 +51,13 @@ export default function EditProfile() {
 
     // ── Data & Privacy toggles ──
     const [sessionHistory, setSessionHistory] = useState(
-        user?.dataPrivacy?.SessionHistory ?? false
+        user?.SessionHistory ?? false
     );
     const [personalizedRecommendation, setPersonalizedRecommendation] = useState(
-        user?.dataPrivacy?.personalizedRecommendation ?? true
+        user?.PersonalizedRecommendation ?? true
     );
     const [marketingEmail, setMarketingEmail] = useState(
-        user?.dataPrivacy?.marketingEmail ?? false
+        user?.MarketingEmail ?? false
     );
 
     // ── Focus states ──
@@ -72,9 +72,17 @@ export default function EditProfile() {
     const [showDobPicker, setShowDobPicker] = useState(false);
 
     // ── Photo ──
-    const [photoUri, setPhotoUri] = useState<string | null>(
-        user?.profileImage?.url ?? user?.avatar?.url ?? null
-    );
+    const [photoUri, setPhotoUri] = useState<string | null>(() => {
+        const rawUrl = user?.profileImage?.url ?? user?.avatar?.url ?? null;
+        if (!rawUrl) return null;
+
+        if (rawUrl.startsWith('http') || rawUrl.startsWith('file://')) {
+            return rawUrl;
+        }
+
+        return `${process.env.EXPO_PUBLIC_IMAGE_API_URL}${rawUrl}`;
+    });
+
     const [photoChanged, setPhotoChanged] = useState(false);
 
     const [saving, setSaving] = useState(false);
@@ -201,11 +209,9 @@ export default function EditProfile() {
                 country,
                 language,
 
-                dataPrivacy: {
-                    SessionHistory: sessionHistory,
-                    personalizedRecommendation,
-                    marketingEmail,
-                },
+                SessionHistory: sessionHistory,
+                PersonalizedRecommendation: personalizedRecommendation,
+                MarketingEmail: marketingEmail,
             };
 
             if (profileImageId) {
@@ -215,9 +221,14 @@ export default function EditProfile() {
             const res = await axios.put(url, payload, {
                 headers: { Authorization: `Bearer ${token}` },
             });
-
             if (res?.data?.success !== false) {
-                await updateUser({ ...payload, email });
+                const { profileImage: _profileImageId, ...storablePayload } = payload;
+
+                await updateUser({
+                    ...storablePayload,
+                    email,
+                    ...(photoChanged ? { profileImage: { url: photoUri } } : {}),
+                });
                 setPhotoChanged(false);
                 Alert.alert('Success', 'Profile updated', [
                     { text: 'OK', onPress: () => router.back() },
