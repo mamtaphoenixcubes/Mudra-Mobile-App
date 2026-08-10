@@ -58,15 +58,17 @@ export default function PracticeModeScreen() {
             .filter((item: any) => item.contentTypeOfAudio === 'mudra')
             .map((item: any) => ({ ...item, kind: 'single' as const }));
 
-        const fromPlaylists = (mudra?.audio_playlists || []).flatMap((playlist: any) =>
-            (playlist.audios || [])
-                .filter((audio: any) => audio.contentTypeOfAudio === 'mudra')
-                .map((audio: any) => ({
-                    ...audio,
-                    kind: 'playlist' as const,
-                    playlistTitle: playlist.title,
-                }))
-        );
+     const fromPlaylists = (mudra?.audio_playlists || []).map((playlist: any) => ({
+    documentId: playlist.documentId,
+    title: playlist.title,
+    description: playlist.description,
+    durationInSeconds: (playlist.audios || []).reduce(
+        (sum: number, audio: any) => sum + (audio.durationInSeconds || 0),
+        0
+    ),
+    kind: 'playlist' as const,
+    playlist: playlist,
+}));
 
         const seen = new Set<string>();
         return [...singles, ...fromPlaylists].filter((item) => {
@@ -75,21 +77,24 @@ export default function PracticeModeScreen() {
             return true;
         });
     }, [mudra]);
+console.log(mudra,"audioVariantsaudioVariants");
 
     const videoVariants = useMemo(() => {
         const singles = (mudra?.videoSingleSessions || [])
             .filter((item: any) => item.contentTypeOfVideo === 'mudra')
             .map((item: any) => ({ ...item, kind: 'single' as const }));
 
-        const fromPlaylists = (mudra?.video_playlists || []).flatMap((playlist: any) =>
-            (playlist.videos || [])
-                .filter((video: any) => video.contentTypeOfVideo === 'mudra')
-                .map((video: any) => ({
-                    ...video,
-                    kind: 'playlist' as const,
-                    playlistTitle: playlist.title,
-                }))
-        );
+    const fromPlaylists = (mudra?.video_playlists || []).map((playlist: any) => ({
+    documentId: playlist.documentId,
+    title: playlist.title,
+    description: playlist.description,
+    durationInSeconds: (playlist.videos || []).reduce(
+        (sum: number, video: any) => sum + (video.durationInSeconds || 0),
+        0
+    ),
+    kind: 'playlist' as const,
+    playlist: playlist,
+}));
 
         const seen = new Set<string>();
         return [...singles, ...fromPlaylists].filter((item) => {
@@ -135,12 +140,13 @@ export default function PracticeModeScreen() {
 
         router.push({
             pathname: '/mudrasessionplayer',
-            params: {
+           params: {
                 id: mudra?.documentId,
-                mediaId: item.documentId,
+                playlistId: item.kind === 'playlist' ? item.documentId : undefined,
+                mediaId: item.kind === 'single' ? item.documentId : undefined,
                 selectedMediaType: mediaType,
                 passduration: minutesFromItem,
-            },
+            }
         });
     };
 

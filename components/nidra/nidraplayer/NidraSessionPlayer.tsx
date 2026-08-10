@@ -92,28 +92,53 @@ export default function NidraSessionPlayer() {
 
     const nidra = selectedMudra?.data ?? selectedMudra;
 
+    const selectedPlaylist = useMemo(() => {
+        if (!playlistId) return localPlaylist ?? null;
+
+        const nidraPlaylist =
+            nidra?.audio_playlists?.find(
+                (p: any) => String(p.documentId) === String(playlistId)
+            ) ??
+            nidra?.video_playlists?.find(
+                (p: any) => String(p.documentId) === String(playlistId)
+            ) ??
+            nidra?.AudioPlaylist?.find(
+                (p: any) => String(p.documentId) === String(playlistId)
+            ) ??
+            null;
+
+        return nidraPlaylist ?? localPlaylist ?? null;
+    }, [nidra, localPlaylist, playlistId]);
+
     const mediaType =
         nidra?.MediaType ||
         nidra?.mediaType ||
-        (localPlaylist?.audios
+        (selectedPlaylist?.audios
             ? 'AUDIO_PLAYLIST'
-            : localPlaylist?.videos
+            : selectedPlaylist?.videos
                 ? 'VIDEO_PLAYLIST'
                 : undefined);
     const floatingTimerRunningRef = useRef(true);
 
 
     const playlistItems = useMemo(() => {
+        if (selectedPlaylist?.audios) {
+            return selectedPlaylist.audios;
+        }
+
+        if (selectedPlaylist?.videos) {
+            return selectedPlaylist.videos;
+        }
+
         if (nidra) {
             // Audio Playlist
             if (mediaType === 'AUDIO_PLAYLIST') {
                 return (
-                    // Existing Mudra/Nidra Detail flow
+                    nidra?.AudioPlaylist?.find(
+                        (playlist: any) => String(playlist.documentId) === String(playlistId)
+                    )?.audios ||
                     nidra?.AudioPlaylist?.[0]?.audios ||
-
-                    // Recently Played API
                     nidra?.media?.audios ||
-
                     []
                 );
             }
@@ -121,10 +146,11 @@ export default function NidraSessionPlayer() {
             // Video Playlist
             if (mediaType === 'VIDEO_PLAYLIST') {
                 return (
+                    nidra?.video_playlists?.find(
+                        (playlist: any) => String(playlist.documentId) === String(playlistId)
+                    )?.videos ||
                     nidra?.video_playlists?.[0]?.videos ||
-
                     nidra?.media?.videos ||
-
                     []
                 );
             }
@@ -140,7 +166,7 @@ export default function NidraSessionPlayer() {
         }
 
         return [];
-    }, [nidra, mediaType, localPlaylist]);
+    }, [nidra, mediaType, localPlaylist, selectedPlaylist, playlistId]);
     const initialIndex = useMemo(() => {
         if (!mediaId || !playlistItems.length) {
             return 0;
@@ -156,6 +182,14 @@ export default function NidraSessionPlayer() {
 
     const [currentIndex, setCurrentIndex] =
         useState(initialIndex);
+
+    useEffect(() => {
+        const nextIndex = mediaId && playlistItems.length
+            ? playlistItems.findIndex((item: any) => String(item.documentId) === String(mediaId))
+            : 0;
+
+        setCurrentIndex(nextIndex >= 0 ? nextIndex : 0);
+    }, [mediaId, playlistId, playlistItems]);
     const singleItem =
         mediaType === 'AUDIO_SINGLE'
             ? (

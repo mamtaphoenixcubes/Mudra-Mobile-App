@@ -70,7 +70,12 @@ export default function MudraSessionPlayer() {
     );
     const [audioDuration, setAudioDuration] = useState(0);
 
-    const { mediaId, id, playlistId, passduration, selectedMediaType } = useLocalSearchParams()
+    const { mediaId, id, playlistId, passduration, selectedMediaType } = useLocalSearchParams();
+    console.log("ROUTE PARAMS", {
+    playlistId,
+    mediaId,
+    selectedMediaType,
+});
     const timerDuration = passduration ? Number(passduration) : 0
     const audioPlaylists = usePlaylistStore((s) => s.audioPlaylists);
     const videoPlaylists = usePlaylistStore((s) => s.videoPlaylists);
@@ -91,47 +96,69 @@ export default function MudraSessionPlayer() {
     const mudra = selectedMudra?.data ?? selectedMudra;
     console.log(mudra, "selectedMudraselectedMudra");
 
-    // const mediaType =
-    //     mudra?.mediaType ??
-    //     (localPlaylist?.audios
-    //         ? 'AUDIO_PLAYLIST'
-    //         : localPlaylist?.videos
-    //             ? 'VIDEO_PLAYLIST'
-    //             : undefined);
+    const selectedPlaylist = useMemo(() => {
+        if (!playlistId) return localPlaylist ?? null;
+
+        const mudraPlaylist =
+            mudra?.audio_playlists?.find(
+                (p: any) => String(p.documentId) === String(playlistId)
+            ) ??
+            mudra?.video_playlists?.find(
+                (p: any) => String(p.documentId) === String(playlistId)
+            ) ??
+            null;
+
+        return mudraPlaylist ?? localPlaylist ?? null;
+    }, [mudra, localPlaylist, playlistId]);
+
     const mediaType =
         (selectedMediaType as string | undefined) ??
         mudra?.mediaType ??
-        (localPlaylist?.audios
+        (selectedPlaylist?.audios
             ? 'AUDIO_PLAYLIST'
-            : localPlaylist?.videos
+            : selectedPlaylist?.videos
                 ? 'VIDEO_PLAYLIST'
                 : undefined);
     const floatingTimerRunningRef = useRef(true);
 
 
-    const playlistItems = useMemo(() => {
-        // Existing flow (Mudra -> Session Player)
-        if (mudra) {
-            if (mediaType === 'AUDIO_PLAYLIST') {
-                return mudra.audio_playlists?.[0]?.audios || [];
-            }
-
-            if (mediaType === 'VIDEO_PLAYLIST') {
-                return mudra.video_playlists?.[0]?.videos || [];
-            }
-        }
-
-        // NEW flow (PlaylistDetail -> Session Player)
-        if (localPlaylist?.audios) {
-            return localPlaylist.audios;
-        }
-
-        if (localPlaylist?.videos) {
-            return localPlaylist.videos;
-        }
-
+const playlistItems = useMemo(() => {
+    // Single sessions
+    if (mediaType === 'AUDIO_SINGLE' || mediaType === 'VIDEO_SINGLE') {
         return [];
-    }, [mudra, mediaType, localPlaylist]);
+    }
+
+    if (selectedPlaylist?.audios) {
+        return selectedPlaylist.audios;
+    }
+
+    if (selectedPlaylist?.videos) {
+        return selectedPlaylist.videos;
+    }
+
+    if (localPlaylist?.audios) {
+        return localPlaylist.audios;
+    }
+
+    if (localPlaylist?.videos) {
+        return localPlaylist.videos;
+    }
+
+    // Fallback only if no playlistId was passed
+    if (mediaType === 'AUDIO_PLAYLIST') {
+        return mudra?.audio_playlists?.find(
+            (playlist: any) => String(playlist.documentId) === String(playlistId)
+        )?.audios || mudra?.audio_playlists?.[0]?.audios || [];
+    }
+
+    if (mediaType === 'VIDEO_PLAYLIST') {
+        return mudra?.video_playlists?.find(
+            (playlist: any) => String(playlist.documentId) === String(playlistId)
+        )?.videos || mudra?.video_playlists?.[0]?.videos || [];
+    }
+
+    return [];
+}, [mediaType, selectedPlaylist, localPlaylist, mudra, playlistId]);
     const initialIndex = useMemo(() => {
         if (!mediaId || !playlistItems.length) {
             return 0;
@@ -147,6 +174,14 @@ export default function MudraSessionPlayer() {
 
     const [currentIndex, setCurrentIndex] =
         useState(initialIndex);
+
+    useEffect(() => {
+        const nextIndex = mediaId && playlistItems.length
+            ? playlistItems.findIndex((item: any) => String(item.documentId) === String(mediaId))
+            : 0;
+
+        setCurrentIndex(nextIndex >= 0 ? nextIndex : 0);
+    }, [mediaId, playlistId, playlistItems]);
     // const singleItem =
     //     mediaType === 'AUDIO_SINGLE'
     //         ? mudra?.audioSingleSessions?.[0]
@@ -529,6 +564,7 @@ export default function MudraSessionPlayer() {
                     mediaDocumentId: media?.documentId,
                     mudraDocumentId: mudra?.documentId,
                     remainingDuration,
+                   sessionDuration: audioDuration,
                 },
                 {
                     headers: {
@@ -1074,18 +1110,6 @@ export default function MudraSessionPlayer() {
                     </View>
                 )}
             </ScrollView>
-            {!isVideo && (
-                <MudraPlayerMiniBar
-                    title={title as string}
-                    currentTime={currentTime}
-                    totalTime={TOTAL}
-                    isPlaying={isPlaying}
-                    onTogglePlay={togglePlayPause}
-                    onSkipBack={skipBack}
-                    onSkipForward={skipForward}
-                    bottomOffset={miniBarBottom}
-                />
-            )}
             {/* Floating Timer — outside ScrollView */}
             {timerDuration > 0 && (
                 <MudraFloatingTimer
