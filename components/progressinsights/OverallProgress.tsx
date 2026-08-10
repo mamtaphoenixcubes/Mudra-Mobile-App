@@ -97,7 +97,7 @@ const STATS = [
             : '—',
         label: goalProgress
             ? 'Weekly Goal\nProgress'
-            : 'Weekly Goal\nNot setyet',
+            : 'Weekly Goal\nNot set yet',
     },
 ];
     return (

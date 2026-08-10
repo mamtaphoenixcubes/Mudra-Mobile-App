@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { getCalendarStyles } from '@/assets/styles/calendar/calendarStyles';
 import { useTheme } from '@/constants/ThemeContext';
 import { useProgressInsightStore } from '@/store/progressInsightStore';
+import ActivitiesModal from '@/components/calendar/ActivitiesModal';
 
 const WEEKDAY_HEADERS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 const MONTH_NAMES = [
@@ -22,7 +23,7 @@ function dateKey(year: number, month: number, day: number): string {
 
 function buildMonthGrid(year: number, month: number) {
     const firstOfMonth = new Date(year, month, 1);
-   const firstWeekday = (firstOfMonth.getDay() + 6) % 7;
+    const firstWeekday = (firstOfMonth.getDay() + 6) % 7;
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     const daysInPrevMonth = new Date(year, month, 0).getDate();
 
@@ -66,8 +67,8 @@ export default function CalendarScreen() {
         () =>
             new Set(
                 calendarData
-                    .filter((item :any) => item.completed)
-                    .map((item :any) => item.date)
+                    .filter((item: any) => item.completed)
+                    .map((item: any) => item.date)
             ),
         [calendarData]
     );
@@ -84,6 +85,8 @@ export default function CalendarScreen() {
         overview?.calendar?.today ?? null
     );
 
+    const [activitiesModalVisible, setActivitiesModalVisible] = useState(false);
+
     useEffect(() => {
         if (!selectedDate && overview?.calendar?.today) {
             setSelectedDate(overview.calendar.today);
@@ -91,7 +94,7 @@ export default function CalendarScreen() {
     }, [overview?.calendar?.today, selectedDate]);
 
     const calendarMap = useMemo(
-        () => new Map(calendarData.map((item :any) => [item.date, item])),
+        () => new Map(calendarData.map((item: any) => [item.date, item])),
         [calendarData]
     );
 
@@ -102,10 +105,10 @@ export default function CalendarScreen() {
 
     const selectedDateLabel = selectedDate
         ? new Date(selectedDate).toLocaleDateString('en-US', {
-              day: 'numeric',
-              month: 'short',
-              year: 'numeric',
-          })
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric',
+        })
         : null;
 
     const year = viewDate.getFullYear();
@@ -119,7 +122,7 @@ export default function CalendarScreen() {
     );
 
     const completedCountThisMonth =
-    overview?.calendar?.totalDays ?? 0;
+        overview?.calendar?.totalDays ?? 0;
 
     const goToPrevMonth = () => setViewDate(new Date(year, month - 1, 1));
     const goToNextMonth = () => setViewDate(new Date(year, month + 1, 1));
@@ -173,6 +176,7 @@ export default function CalendarScreen() {
                                             onPress={() => {
                                                 if (cell.inCurrentMonth) {
                                                     setSelectedDate(key);
+                                                    setActivitiesModalVisible(true);
                                                 }
                                             }}
                                             style={[
@@ -221,7 +225,7 @@ export default function CalendarScreen() {
                     </Text>
                 </View>
             </View>
-            <View style={styles.activitiesContainer}>
+            {/* <View style={styles.activitiesContainer}>
                 <Text style={styles.activitiesTitle}>
                     {selectedDate
                         ? `Activities on ${selectedDateLabel}`
@@ -254,7 +258,13 @@ export default function CalendarScreen() {
                         </View>
                     ))
                 )}
-            </View>
+            </View> */}
+            <ActivitiesModal
+                visible={activitiesModalVisible}
+                onClose={() => setActivitiesModalVisible(false)}
+                dateLabel={selectedDateLabel}
+                sessions={selectedDay?.sessions}
+            />
         </View>
     );
 }

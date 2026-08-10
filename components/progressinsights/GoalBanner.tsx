@@ -33,7 +33,7 @@ export default function GoalBanner() {
                     </Text>
                 </View>
                 <TouchableOpacity style={styles.goalBtn} activeOpacity={0.8} onPress={() => setModalVisible(true)}>
-                    <Text style={styles.goalBtnText}>{progress ? 'Edit Goal' : 'Set New Goal'}</Text>
+                    <Text style={styles.goalBtnText}>{progress ? 'View Goal' : 'Set New Goal'}</Text>
                 </TouchableOpacity>
             </View>
 

@@ -176,46 +176,110 @@ export const getCalendarStyles = (colors: typeof lightColors) =>
             color: colors.text,
             textAlign: 'center',
         },
-        activitiesContainer: {
-    marginHorizontal: 20,
-    marginTop: 20,
-},
 
-activitiesTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    marginBottom: 12,
-},
+        // ── Activities modal — same structural pattern as SoundPickerModal ───────
+        modalBackdrop: {
+            flex: 1,
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            justifyContent: 'flex-end',
+        },
+        modalSheet: {
+            backgroundColor: colors.card,
+            borderTopLeftRadius: moderateScale(24),
+            borderTopRightRadius: moderateScale(24),
+            paddingHorizontal: moderateScale(20),
+            paddingTop: moderateScale(12),
+        },
+        modalHandle: {
+            width: moderateScale(40),
+            height: moderateScale(4),
+            borderRadius: moderateScale(2),
+            alignSelf: 'center',
+            backgroundColor: colors.border,
+            marginBottom: moderateScale(16),
+        },
+        modalCancelBtn: {
+            borderWidth: 1,
+            borderColor: colors.border,
+            borderRadius: moderateScale(12),
+            paddingVertical: moderateScale(14),
+            alignItems: 'center',
+            marginTop: moderateScale(16),
+        },
+        modalCancelText: {
+            fontFamily: 'SF-Pro-Display',
+            fontWeight: '500',
+            fontSize: moderateScale(15),
+            color: colors.textSub,
+        },
 
-activityCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 14,
-    borderRadius: 12,
-    backgroundColor: colors.card,
-    marginBottom: 10,
-},
-
-activityTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-},
-
-activitySubtitle: {
-    fontSize: 13,
-    opacity: 0.7,
-    marginTop: 3,
-},
-
-activityDuration: {
-    fontSize: 14,
-    fontWeight: '600',
-},
-
-noActivityText: {
-    textAlign: 'center',
-    opacity: 0.6,
-    marginTop: 12,
-},
+        // ── Activities list content (used inside the modal) ──────────────────────
+        activitiesTitle: {
+            fontFamily: 'SF-Pro-Display',
+            fontWeight: '600',
+            fontSize: moderateScale(17),
+            color: colors.text,
+            marginBottom: moderateScale(12),
+        },
+        activityScrollArea: {
+            maxHeight: moderateScale(360),
+        },
+        activityScrollContent: {
+            gap: moderateScale(10),
+            paddingBottom: moderateScale(4),
+        },
+        activityCard: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: moderateScale(12),
+            backgroundColor: colors.surfaceAlt,
+            borderRadius: moderateScale(14),
+            padding: moderateScale(12),
+        },
+        activityIconCircle: {
+            width: moderateScale(42),
+            height: moderateScale(42),
+            borderRadius: moderateScale(21),
+            alignItems: 'center',
+            justifyContent: 'center',
+        },
+        activityTextBlock: {
+            flex: 1,
+        },
+        activityTitle: {
+            fontFamily: 'SF-Pro-Display',
+            fontWeight: '600',
+            fontSize: moderateScale(14.5),
+            color: colors.text,
+        },
+        activitySubtitle: {
+            fontFamily: 'SF-Pro-Display',
+            fontWeight: '400',
+            fontSize: moderateScale(12),
+            color: colors.textSub,
+            marginTop: moderateScale(3),
+        },
+        durationBadge: {
+            backgroundColor: colors.primaryMuted,
+            borderRadius: moderateScale(20),
+            paddingHorizontal: moderateScale(10),
+            paddingVertical: moderateScale(5),
+        },
+        activityDuration: {
+            fontFamily: 'SF-Pro-Display',
+            fontWeight: '600',
+            fontSize: moderateScale(12),
+            color: colors.primary,
+        },
+        emptyActivityState: {
+            alignItems: 'center',
+            paddingVertical: moderateScale(30),
+            gap: moderateScale(8),
+        },
+        noActivityText: {
+            fontFamily: 'SF-Pro-Display',
+            fontSize: moderateScale(13),
+            color: colors.textSub,
+            textAlign: 'center',
+        },
     });

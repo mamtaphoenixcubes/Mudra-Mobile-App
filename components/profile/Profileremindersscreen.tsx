@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 import {
   View,
@@ -98,6 +98,16 @@ export default function ProfileRemindersScreen() {
     isLoggedIn &&
     !!token &&
     !!user;
+
+  const fetchReminders = useReminderStore((s) => s.fetchReminders);
+
+  useEffect(() => {
+    if (loggedIn && user?.id) {
+      fetchReminders(user.id);
+    } else {
+      useReminderStore.setState({ reminders: [] });
+    }
+  }, [loggedIn, user?.id]);
 
   /*
   |--------------------------------------------------------------------------
