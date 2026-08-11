@@ -9,14 +9,6 @@ import BeginnerSvg from '@/assets/icons/Group.svg';
 import ClockWhite from '@/assets/icons/ClockWhite.svg'
 import GroupWhite from '@/assets/icons/GroupWhite.svg'
 import ElementalLogicWhite from '@/assets/icons/elementallogicWhite.svg'
-import {
-    useStreakStore,
-    getThisWeekStats,
-    getThisMonthStats,
-    getAllTimeStats,
-    getWeekOverWeekChange,
-} from '@/store/streakStore';
-import { useGoalStore, getGoalProgress } from '@/store/goalStore';
 import TimeRangeDropdown, { type TimeRange, timeRangeLabel } from '@/components/common/TimeRangeDropdown';
 
 interface AnalyticsSectionProps {
@@ -32,73 +24,79 @@ export default function AnalyticsSection({
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const [range, setRange] = useState<TimeRange>('week');
 
-   const averageSession =
-    analytics?.averageSessionDuration?.formatted ?? '--';
+    const averageSession =
+        analytics?.averageSessionDuration?.formatted ?? '--';
 
-const weeklyComparison = analytics?.weeklyComparison;
+    const weeklyComparison = analytics?.weeklyComparison;
 
-const goalCompletion = analytics?.goalCompletion;
+    const goalCompletion = analytics?.goalCompletion;
 
-const changeColor =
-    weeklyComparison?.trend === 'UP'
-        ? '#2E7D32'
-        : weeklyComparison?.trend === 'DOWN'
-        ? '#C62828'
-        : colors.text;
 
-const changeValue =
-    weeklyComparison?.trend === 'UP'
-        ? `+${weeklyComparison?.percentage ?? 0}%`
-        : weeklyComparison?.trend === 'DOWN'
-        ? `-${weeklyComparison?.percentage ?? 0}%`
-        : 'No Change';
+    const changeColor =
+        weeklyComparison?.trend === 'UP'
+            ? '#2E7D32'
+            : weeklyComparison?.trend === 'DOWN'
+                ? '#C62828'
+                : colors.text;
 
-const goalValue = goalCompletion?.hasGoal
-  ? `${goalCompletion.completed === false ? 0 : (goalCompletion.completed ?? 0)} / ${
-      goalCompletion.goalType === 'DURATION'
-        ? goalCompletion.target / 60
-        : goalCompletion.target
-    }`
-  : 'Not Set';
+    const changeValue =
+        weeklyComparison?.trend === 'UP'
+            ? `+${weeklyComparison?.percentage ?? 0}%`
+            : weeklyComparison?.trend === 'DOWN'
+                ? `-${weeklyComparison?.percentage ?? 0}%`
+                : 'No Change';
+
+    const isDurationGoal = goalCompletion?.goalType === 'DURATION';
+
+    const goalValue = goalCompletion?.hasGoal
+        ? `${isDurationGoal
+            ? ((goalCompletion.current === false ? 0 : (goalCompletion.current ?? 0)) / 60).toFixed(1)
+            : (goalCompletion.current === false ? 0 : (goalCompletion.current ?? 0))
+        } / ${isDurationGoal
+            ? (goalCompletion.target / 60).toFixed(1)
+            : goalCompletion.target
+        }`
+        : 'Not Set';
 
     const STATS = [
-    {
-        icon: isDark
-            ? <ClockWhite width={26} height={26} />
-            : <ClockSvg width={26} height={26} />,
-        value: averageSession,
-        label: 'Average Session\nDuration',
-        valueColor: colors.text,
-    },
-    {
-        icon: isDark
-            ? <GroupWhite width={26} height={26} />
-            : <BeginnerSvg width={26} height={26} />,
-        value: changeValue,
-        label: 'Increase vs Last\nWeek',
-        valueColor: changeColor,
-    },
-    {
-        icon: isDark
-            ? <ElementalLogicWhite width={26} height={26} />
-            : <ElementalLogicSvg width={26} height={26} />,
-        value: goalValue,
-        label: 'Goals\nCompleted',
-        valueColor: colors.text,
-    },
-];
+        {
+            icon: isDark
+                ? <ClockWhite width={26} height={26} />
+                : <ClockSvg width={26} height={26} />,
+            value: averageSession,
+            label: 'Average Session\nDuration',
+            valueColor: colors.text,
+        },
+        {
+            icon: isDark
+                ? <GroupWhite width={26} height={26} />
+                : <BeginnerSvg width={26} height={26} />,
+            value: changeValue,
+            label: 'Increase vs Last\nWeek',
+            valueColor: changeColor,
+        },
+        {
+            icon: isDark
+                ? <ElementalLogicWhite width={26} height={26} />
+                : <ElementalLogicSvg width={26} height={26} />,
+            value: goalValue,
+            label: 'Goals\nCompleted',
+            valueColor: colors.text,
+            isDuration: isDurationGoal && goalCompletion?.hasGoal,
+        },
+    ];
     return (
         <View style={styles.analyticsContainer}>
             <View style={styles.sectionHeaderRow}>
                 <Text style={styles.sectionTitle}>3. Analytics</Text>
-                <TouchableOpacity
+                {/* <TouchableOpacity
                     style={styles.overallWeekRow}
                     activeOpacity={0.7}
                     onPress={() => setDropdownOpen(true)}
                 >
                     <Text style={styles.sectionLink}>{timeRangeLabel(range)}</Text>
                     <Ionicons name="chevron-down" size={14} color="#9A85FE" />
-                </TouchableOpacity>
+                </TouchableOpacity> */}
             </View>
 
             <View style={styles.analyticsCard}>
@@ -106,7 +104,11 @@ const goalValue = goalCompletion?.hasGoal
                     <React.Fragment key={i}>
                         <View style={styles.analyticsStatItem}>
                             {stat.icon}
-                            <Text style={[styles.analyticsStatValue, { color: stat.valueColor }]}>{stat.value}</Text>
+                            <Text style={[styles.analyticsStatValue, { color: stat.valueColor }]}>{stat.value}
+                                {stat.isDuration && (
+                                    <Text style={{ fontSize: 8, fontWeight: '500' }}> Mins</Text>
+                                )}
+                            </Text>
                             <Text style={styles.analyticsStatLabel}>{stat.label}</Text>
                         </View>
                         {i < STATS.length - 1 && <View style={styles.analyticsStatDivider} />}

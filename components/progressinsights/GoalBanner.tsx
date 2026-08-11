@@ -3,22 +3,22 @@ import { View, Text, TouchableOpacity } from 'react-native';
 import { getProgressInsightsStyles } from '@/assets/styles/progressinsights/progressInsightsStyles'
 import { useTheme } from '@/constants/ThemeContext'
 import GreatSvg from '@/assets/icons/Great.svg';
-import { useGoalStore, getGoalProgress } from '@/store/goalStore';
-import { useStreakStore } from '@/store/streakStore';
+// import { useGoalStore, getGoalProgress } from '@/store/goalStore';
+// import { useStreakStore } from '@/store/streakStore';
 import SetGoalModal from '@/components/common/SetGoalModal';
 
-export default function GoalBanner() {
+export default function GoalBanner({ goal }: { goal: any | null }) {
     const { colors } = useTheme()
     const styles = getProgressInsightsStyles(colors)
 
     const [modalVisible, setModalVisible] = useState(false);
-    const goalType = useGoalStore((s) => s.goalType);
-    const targetValue = useGoalStore((s) => s.targetValue);
-    const events = useStreakStore((s) => s.events);
-    const progress = getGoalProgress(goalType, targetValue, events);
+    const hasActiveGoal = goal?.GoalStatus === 'ACTIVE';
+    const current = goal?.CurrentProgress ?? 0;
+    const target = goal?.GoalValue ?? 0;
+    const unitLabel = goal?.GoalType === 'SESSION_COUNT' ? 'sessions' : 'minutes';
 
-    const message = progress
-        ? `You've done ${progress.current} of ${progress.target} ${goalType === 'sessions' ? 'sessions' : 'minutes'} this week!`
+    const message = hasActiveGoal
+        ? `You've done ${current} of ${target} ${unitLabel} this week!`
         : "Great progress! You're building a beautiful habit of self-care.";
 
     return (
@@ -33,7 +33,7 @@ export default function GoalBanner() {
                     </Text>
                 </View>
                 <TouchableOpacity style={styles.goalBtn} activeOpacity={0.8} onPress={() => setModalVisible(true)}>
-                    <Text style={styles.goalBtnText}>{progress ? 'View Goal' : 'Set New Goal'}</Text>
+                    <Text style={styles.goalBtnText}>{hasActiveGoal ? 'View Goal' : 'Set New Goal'}</Text>
                 </TouchableOpacity>
             </View>
 

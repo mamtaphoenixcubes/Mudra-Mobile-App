@@ -19,58 +19,58 @@ export default function ProgressInsightsScreen() {
     const insets = useSafeAreaInsets();
     const { colors } = useTheme()
     const styles = getProgressInsightsStyles(colors)
-  const { user } = useAuthStore();
-const [refreshing, setRefreshing] = useState(false);
+    const { user } = useAuthStore();
+    const [refreshing, setRefreshing] = useState(false);
     const profileDocumentId =
         user?.id ||
         user?.profileDocumentId;
     const [activeTab, setActiveTab] = useState<ProgressTab>('All');
-const { goal, overview, summary, distribution,analytics, loading,createGoal,fetchGoal,fetchOverview,fetchSummary,fetchDistribution,fetchAnalytics,} = useProgressInsightStore();
-const loadData = useCallback(async () => {
-    if (!profileDocumentId) return;
+    const { goal, overview, summary, distribution, analytics, loading, createGoal, fetchGoal, fetchOverview, fetchSummary, fetchDistribution, fetchAnalytics, } = useProgressInsightStore();
+    const loadData = useCallback(async () => {
+        if (!profileDocumentId) return;
 
-    await Promise.all([
-        fetchGoal(profileDocumentId),
-        fetchOverview(profileDocumentId),
-        fetchSummary(profileDocumentId),
-        fetchDistribution(profileDocumentId),
-        fetchAnalytics(profileDocumentId),
+        await Promise.all([
+            fetchGoal(profileDocumentId),
+            fetchOverview(profileDocumentId),
+            fetchSummary(profileDocumentId),
+            fetchDistribution(profileDocumentId),
+            fetchAnalytics(profileDocumentId),
+        ]);
+    }, [
+        profileDocumentId,
+        fetchGoal,
+        fetchOverview,
+        fetchSummary,
+        fetchDistribution,
+        fetchAnalytics,
     ]);
-}, [
-    profileDocumentId,
-    fetchGoal,
-    fetchOverview,
-    fetchSummary,
-    fetchDistribution,
-    fetchAnalytics,
-]);
-useEffect(() => {
-    loadData();
-}, [loadData]);
-const onRefresh = useCallback(async () => {
-    setRefreshing(true);
+    useEffect(() => {
+        loadData();
+    }, [loadData]);
+    const onRefresh = useCallback(async () => {
+        setRefreshing(true);
 
-    try {
-        await loadData();
-    } finally {
-        setRefreshing(false);
-    }
-}, [loadData]);
+        try {
+            await loadData();
+        } finally {
+            setRefreshing(false);
+        }
+    }, [loadData]);
     return (
         <View style={styles.screen}>
             <ProgressHeader />
-       <ScrollView
-    showsVerticalScrollIndicator={false}
-    contentContainerStyle={{ paddingBottom: insets.bottom + 120 }}
-    refreshControl={
-        <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            colors={[colors.primary]}
-            tintColor={colors.primary}
-        />
-    }
->
+            <ScrollView
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={{ paddingBottom: insets.bottom + 120 }}
+                refreshControl={
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={onRefresh}
+                        colors={[colors.primary]}
+                        tintColor={colors.primary}
+                    />
+                }
+            >
                 <Text style={styles.pageTitle}>Progress Insights</Text>
                 <Text style={styles.subtitle}>
                     Track your journey. Celebrate your growth.
@@ -79,11 +79,11 @@ const onRefresh = useCallback(async () => {
 
                 {activeTab === 'All' && (
                     <>
-                         <OverallProgress summary={summary} />
+                        <OverallProgress summary={summary} goal={goal} />
                         <PracticeAnalysis distribution={distribution} />
-                       <ConsistencySection overview={overview} />
-                         <AnalyticsSection analytics={analytics} />
-                        <GoalBanner analytics={analytics} />
+                        <ConsistencySection overview={overview} />
+                        <AnalyticsSection analytics={analytics} />
+                        <GoalBanner goal={goal} />
                     </>
                 )}
 

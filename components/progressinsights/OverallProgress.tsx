@@ -13,15 +13,15 @@ import LotusBlack from '@/assets/icons/LotusBlack.svg';
 import FireSvg from '@/assets/icons/Fire.svg';
 import StarSvg from '@/assets/icons/Star.svg';
 
-import {
-    useStreakStore,
-    getCurrentStreak,
-    getThisWeekStats,
-    getThisMonthStats,
-    getAllTimeStats,
-    formatMinutesAsHoursMinutes,
-} from '@/store/streakStore';
-import { useGoalStore, getGoalProgress } from '@/store/goalStore';
+// import {
+//     useStreakStore,
+//     getCurrentStreak,
+//     getThisWeekStats,
+//     getThisMonthStats,
+//     getAllTimeStats,
+//     formatMinutesAsHoursMinutes,
+// } from '@/store/streakStore';
+// import { useGoalStore, getGoalProgress } from '@/store/goalStore';
 
 interface OverallProgressProps {
     summary?: {
@@ -31,75 +31,74 @@ interface OverallProgressProps {
         formatted: string;
         currentStreak: number;
     };
+    goal?: any | null;
 }
 
 export default function OverallProgress({
     summary,
+    goal,
 }: OverallProgressProps) {
     const { colors, isDark } = useTheme()
     const styles = getProgressInsightsStyles(colors)
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const [range, setRange] = useState<TimeRange>('week');
 
-    const events = useStreakStore((s) => s.events);
+    const hasActiveGoal = goal?.GoalStatus === 'ACTIVE';
 
-    // "Total Practice Time" and "Sessions Completed" change with the
-    // dropdown. "Day Streak" and "Weekly Goal" stay fixed to their real
-    // CURRENT values regardless of range — a streak and a goal are
-    // inherently "right now" concepts, same reasoning as "Increase vs
-    // Last Week" on the Analytics card always meaning the current week.
-    const rangeStats =
-        range === 'week' ? getThisWeekStats(events)
-            : range === 'month' ? getThisMonthStats(events)
-                : getAllTimeStats(events);
+    const goalCurrentRaw = goal?.CurrentProgress === false ? 0 : (goal?.CurrentProgress ?? 0);
+    const goalTargetRaw = goal?.GoalValue ?? 0;
 
-    const currentStreak = getCurrentStreak(events);
+    const isDurationGoal = goal?.GoalType === 'DURATION';
 
-    const goalType = useGoalStore((s) => s.goalType);
-    const targetValue = useGoalStore((s) => s.targetValue);
-    const goalProgress = getGoalProgress(goalType, targetValue, events);
-const STATS = [
-    {
-        icon: isDark ? (
-            <ClockWhite width={26} height={26} />
-        ) : (
-            <ClockSvg width={26} height={26} />
-        ),
-        value: summary?.formatted ?? '0m',
-        label: 'Total Practice\nTime',
-    },
-    {
-        icon: isDark ? (
-            <LotusWhite width={26} height={26} />
-        ) : (
-            <LotusBlack width={26} height={26} />
-        ),
-        value: String(summary?.totalCompletedSessions ?? 0),
-        label: 'Sessions\nCompleted',
-    },
-    {
-        icon: isDark ? (
-            <FireWhite width={26} height={26} />
-        ) : (
-            <FireSvg width={26} height={26} />
-        ),
-        value: String(summary?.currentStreak ?? 0),
-        label: 'Day Streak\nKeep it up!',
-    },
-    {
-        icon: isDark ? (
-            <StarWhite width={26} height={26} />
-        ) : (
-            <StarSvg width={26} height={26} />
-        ),
-        value: goalProgress
-            ? `${goalProgress.current}/${goalProgress.target}`
-            : '—',
-        label: goalProgress
-            ? 'Weekly Goal\nProgress'
-            : 'Weekly Goal\nNot set yet',
-    },
-];
+
+    const goalCurrent = isDurationGoal ? Math.round(goalCurrentRaw / 60) : goalCurrentRaw;
+    const goalTarget = isDurationGoal ? Math.round(goalTargetRaw / 60) : goalTargetRaw;
+
+
+    const STATS = [
+        {
+            icon: isDark ? (
+                <ClockWhite width={26} height={26} />
+            ) : (
+                <ClockSvg width={26} height={26} />
+            ),
+            value: summary?.formatted ?? '0m',
+            label: 'Total Practice\nTime',
+        },
+        {
+            icon: isDark ? (
+                <LotusWhite width={26} height={26} />
+            ) : (
+                <LotusBlack width={26} height={26} />
+            ),
+            value: String(summary?.totalCompletedSessions ?? 0),
+            label: 'Sessions\nCompleted',
+        },
+        {
+            icon: isDark ? (
+                <FireWhite width={26} height={26} />
+            ) : (
+                <FireSvg width={26} height={26} />
+            ),
+            value: String(summary?.currentStreak ?? 0),
+            label: 'Day Streak\nKeep it up!',
+        },
+        {
+            icon: isDark ? (
+                <StarWhite width={26} height={26} />
+            ) : (
+                <StarSvg width={26} height={26} />
+            ),
+            value: hasActiveGoal
+                ? `${goalCurrent}/${goalTarget}`
+                : '—',
+            label: hasActiveGoal
+                ? 'Weekly Goal\nProgress'
+                : 'Weekly Goal\nNot set yet',
+
+            isDuration: hasActiveGoal && isDurationGoal,
+        },
+    ];
     return (
         <View style={styles.overallContainer}>
             <View style={styles.overallCard}>
@@ -119,7 +118,11 @@ const STATS = [
                         <React.Fragment key={i}>
                             <View style={styles.overallStatItem}>
                                 {stat.icon}
-                                <Text style={styles.overallStatValue}>{stat.value}</Text>
+                                <Text style={styles.overallStatValue}>{stat.value}
+                                    {stat.isDuration && (
+                                        <Text style={{ fontSize: 6, fontWeight: '400' }}> Mins</Text>
+                                    )}
+                                </Text>
                                 <Text style={styles.overallStatLabel}>{stat.label}</Text>
                             </View>
                             {i < STATS.length - 1 && <View style={styles.overallStatDivider} />}
