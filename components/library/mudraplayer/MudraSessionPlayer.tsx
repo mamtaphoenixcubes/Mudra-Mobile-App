@@ -290,12 +290,7 @@ const playlistItems = useMemo(() => {
         playlistItems,
         media
     ]);
-    useEffect(() => {
-        if (!isVideo || !videoPlayerRef.current) return;
-
-        videoPlayerRef.current.play();
-
-    }, [currentIndex, mediaUrl]);
+ 
     const handleSaveMudra = async () => {
         try {
             if (

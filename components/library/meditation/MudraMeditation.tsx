@@ -28,7 +28,7 @@ import TipCard from './TipCard';
 import MeditationFooter from './MeditationFooter';
 import MudraTimerModal from './MudraTimerModal';
 import BackgroundMusicModal from '@/components/common/BackgroundMusicModal';
-
+import { useBgMusicStore } from '@/store/bgMusicStore';
 import { useMudraStore } from '@/store/mudraStore';
 import MudraDetailSkeleton from '@/components/common/skeletons/MudraDetailSkeleton';
 import { useAuthStore } from '@/store/authStore';
@@ -42,7 +42,17 @@ export default function MudraMeditation() {
 
     const { id } = useLocalSearchParams();
     const { user } = useAuthStore();
+const selectedBgMusicId = useBgMusicStore(
+    (s) => s.selectedBgMusicId
+);
 
+const bgMusicOptions = useBgMusicStore(
+    (s) => s.bgMusicOptions
+);
+
+const selectedBgMusic = bgMusicOptions.find(
+    (option) => option.id === selectedBgMusicId
+);
     const profileDocumentId =
         user?.id || user?.profileDocumentId;
     console.log(profileDocumentId, "profileDocumentIdprofileDocumentIdprofileDocumentId");
@@ -304,17 +314,18 @@ export default function MudraMeditation() {
 
 
 
-            <MudraTimerModal
-                visible={timerVisible}
-                durationInMinutes={timerDuration}
-                selectedDuration={selectedDuration}
-                remainingDuration={remainingDuration}
-                lastSessionDuration={currentUserActivity?.sessionDuration}
-                mudraId={mudra?.documentId}
-                mudraName={mudra?.name}
-                profileDocumentId={profileDocumentId}
-                onClose={() => setTimerVisible(false)}
-            />
+        <MudraTimerModal
+    visible={timerVisible}
+    durationInMinutes={timerDuration}
+    selectedDuration={selectedDuration}
+    remainingDuration={remainingDuration}
+    lastSessionDuration={currentUserActivity?.sessionDuration}
+    mudraId={mudra?.documentId}
+    mudraName={mudra?.name}
+    profileDocumentId={profileDocumentId}
+    bgMusicUrl={selectedBgMusic?.fileUrl ?? null}
+    onClose={() => setTimerVisible(false)}
+/>
 
             <BackgroundMusicModal
                 visible={bgMusicModalVisible}

@@ -50,7 +50,8 @@ export default function BackgroundMusicModal({ visible, onClose }: BackgroundMus
     const insets = useSafeAreaInsets();
     const selectedBgMusicId = useBgMusicStore((s) => s.selectedBgMusicId);
     const setSelectedBgMusicId = useBgMusicStore((s) => s.setSelectedBgMusicId);
-
+const [tempSelectedBgMusicId, setTempSelectedBgMusicId] =
+    useState<string | null>(null);
     const bgMusicOptions = useBgMusicStore((s) => s.bgMusicOptions);
     const fetchBgMusicOptions = useBgMusicStore((s) => s.fetchBgMusicOptions);
 
@@ -65,7 +66,12 @@ export default function BackgroundMusicModal({ visible, onClose }: BackgroundMus
             fetchBgMusicOptions();
         }
     }, [visible]);
-
+useEffect(() => {
+    if (visible) {
+        fetchBgMusicOptions();
+        setTempSelectedBgMusicId(selectedBgMusicId);
+    }
+}, [visible]);
     // Stop any preview when the modal closes
     useEffect(() => {
         if (!visible) {
@@ -140,11 +146,17 @@ export default function BackgroundMusicModal({ visible, onClose }: BackgroundMus
             console.log('Background music preview error:', err);
         }
     };
+const handleSelect = async (id: string) => {
+    await stopPreview();
+    setTempSelectedBgMusicId(id);
+};
+const handleSave = () => {
+    if (tempSelectedBgMusicId !== null) {
+        setSelectedBgMusicId(tempSelectedBgMusicId);
+    }
 
-    const handleSelect = async (id: string) => {
-        await stopPreview();
-        setSelectedBgMusicId(id);
-    };
+    onClose();
+};
 
     const sheetBg = colors.card;
 
@@ -175,7 +187,7 @@ export default function BackgroundMusicModal({ visible, onClose }: BackgroundMus
                     </Text>
                     <View style={[styles.optionsList, { borderColor: colors.border }]}>
                         {bgMusicOptions.map((option, index) => {
-                            const isSelected = selectedBgMusicId === option.id;
+                            const isSelected = tempSelectedBgMusicId === option.id;
                             const isPreviewing = previewingId === option.id;
                             const canPreview = !!option.fileUrl;
 
@@ -229,13 +241,23 @@ export default function BackgroundMusicModal({ visible, onClose }: BackgroundMus
                         })}
                     </View>
 
-                    <TouchableOpacity
-                        style={[styles.cancelBtn, { borderColor: colors.border }]}
-                        activeOpacity={0.7}
-                        onPress={onClose}
-                    >
-                        <Text style={[styles.cancelText, { color: colors.textSub }]}>Cancel</Text>
-                    </TouchableOpacity>
+                 <TouchableOpacity
+    style={styles.saveBtn}
+    activeOpacity={0.8}
+    onPress={handleSave}
+>
+    <Text style={styles.saveText}>Save</Text>
+</TouchableOpacity>
+
+<TouchableOpacity
+    style={[styles.cancelBtn, { borderColor: colors.border }]}
+    activeOpacity={0.7}
+    onPress={onClose}
+>
+    <Text style={[styles.cancelText, { color: colors.textSub }]}>
+        Cancel
+    </Text>
+</TouchableOpacity>
                 </View>
             </TouchableOpacity>
         </Modal>
@@ -334,4 +356,18 @@ const styles = StyleSheet.create({
         fontWeight: '500',
         fontSize: moderateScale(15),
     },
+    saveBtn: {
+    backgroundColor: '#9A85FE',
+    borderRadius: moderateScale(12),
+    paddingVertical: moderateScale(14),
+    alignItems: 'center',
+    marginBottom: moderateScale(10),
+},
+
+saveText: {
+    fontFamily: 'SF-Pro-Display',
+    fontWeight: '600',
+    fontSize: moderateScale(15),
+    color: '#FFFFFF',
+},
 });

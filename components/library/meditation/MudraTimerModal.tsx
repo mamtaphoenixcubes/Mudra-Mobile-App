@@ -14,7 +14,6 @@ import { Audio } from 'expo-av';
 import Svg, { Circle } from 'react-native-svg';
 import { useTheme } from '@/constants/ThemeContext';
 
-const BGM_SOUND = require('@/assets/audio/meditationbgm/peacebgmloop.mp3')
 const BEEP_SOUND = require('@/assets/audio/meditationalerttune/alerttuneone.mp3')
 
 interface MudraTimerModalProps {
@@ -26,6 +25,7 @@ interface MudraTimerModalProps {
     mudraId: string;
     mudraName: string;
     profileDocumentId: string;
+    bgMusicUrl?: string | null;
     onClose: () => void;
 }
 
@@ -41,6 +41,7 @@ const MudraTimerModal = ({
     mudraId,
     mudraName,
     profileDocumentId,
+    bgMusicUrl,
     onClose,
 }: MudraTimerModalProps) => {
     const { isDark } = useTheme();
@@ -51,7 +52,6 @@ const MudraTimerModal = ({
     const [isPaused, setIsPaused] = useState(false);
     const [hasStarted, setHasStarted] = useState(false);
     const [isCompleted, setIsCompleted] = useState(false);
-    const [bgmEnabled, setBgmEnabled] = useState(false);
 
     const hasCompletedRef = useRef(false);
     const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -75,20 +75,34 @@ const MudraTimerModal = ({
     };
 
     // ── BGM ──────────────────────────────────────────────────────────────────
-    const startBgm = async () => {
-        if (!bgmEnabled) return;
-        try {
-            await Audio.setAudioModeAsync({ playsInSilentModeIOS: true });
-            const { sound } = await Audio.Sound.createAsync(
-                BGM_SOUND,
-                { shouldPlay: true, isLooping: true, volume: 0.4 }
-            );
-            bgmSoundRef.current = sound;
-            await sound.playAsync();
-        } catch (e) {
-            console.log('BGM error:', e);
-        }
-    };
+const startBgm = async () => {
+    if (!bgMusicUrl) return;
+
+    try {
+        await Audio.setAudioModeAsync({
+            playsInSilentModeIOS: true,
+        });
+
+        const source =
+            typeof bgMusicUrl === 'string'
+                ? { uri: bgMusicUrl }
+                : bgMusicUrl;
+
+        const { sound } = await Audio.Sound.createAsync(
+            source,
+            {
+                shouldPlay: true,
+                isLooping: true,
+                volume: 0.4,
+            }
+        );
+
+        bgmSoundRef.current = sound;
+
+    } catch (e) {
+        console.log('BGM error:', e);
+    }
+};
 
     const pauseBgm = async () => {
         try {
@@ -96,12 +110,15 @@ const MudraTimerModal = ({
         } catch (e) { }
     };
 
-    const resumeBgm = async () => {
-        if (!bgmEnabled) return;
-        try {
-            await bgmSoundRef.current?.playAsync();
-        } catch (e) { }
-    };
+   const resumeBgm = async () => {
+    if (!bgMusicUrl) return;
+
+    try {
+        await bgmSoundRef.current?.playAsync();
+    } catch (e) {
+        console.log('Resume BGM error:', e);
+    }
+};
 
     const stopBgm = async () => {
         try {
@@ -159,7 +176,6 @@ const MudraTimerModal = ({
         setIsPaused(false);
         setHasStarted(false);
         setIsCompleted(false);
-        setBgmEnabled(false);
         hasCompletedRef.current = false;
 
         return () => {
@@ -281,21 +297,7 @@ const MudraTimerModal = ({
                         {Math.floor(durationInMinutes)} minute session
                     </Text>
 
-                    {/* BGM Checkbox — only shown before start */}
-                    {!hasStarted && (
-                        <TouchableOpacity
-                            style={[styles.bgmRow, { backgroundColor: checkboxBg, borderColor: checkboxBorder }]}
-                            onPress={() => setBgmEnabled(prev => !prev)}
-                            activeOpacity={0.8}
-                        >
-                            <View style={[styles.checkbox, bgmEnabled && styles.checkboxActive]}>
-                                {bgmEnabled && <Text style={styles.checkmark}>✓</Text>}
-                            </View>
-                            <Text style={[styles.bgmLabel, { color: textColor }]}>
-                                Play background peace tune
-                            </Text>
-                        </TouchableOpacity>
-                    )}
+                 
 
                     {/* Circular Progress */}
                     <View style={styles.circleWrapper}>
