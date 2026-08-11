@@ -28,6 +28,7 @@ import {
     doc, setDoc
 } from 'firebase/firestore';
 import { useAnonAuthStore } from '@/store/anonAuthStore';
+import { useAuthStore } from '@/store/authStore';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const moderateScale = (size: number, factor = 0.5) =>
@@ -138,7 +139,12 @@ const TypingIndicator = ({ bubbleColor, dotColor }: { bubbleColor: string; dotCo
 export default function HelpSupportChat() {
     const { colors } = useTheme();
     //const [uid, setUid] = useState<string | null>(null);
-    const uid = useAnonAuthStore((s) => s.uid);
+    //const uid = useAnonAuthStore((s) => s.uid);
+    const { user } = useAuthStore();
+    const uid = user?.FirebaseUid ?? null;
+
+    // console.log('Current Firebase Auth uid:', auth.currentUser?.uid);
+    //     console.log('Chat doc uid being used:', uid);
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState('');
     const [isBotTyping, setIsBotTyping] = useState(false);

@@ -4,6 +4,7 @@ import * as Notifications from 'expo-notifications';
 import { db } from '@/constants/firebase';
 import { useAnonAuthStore } from '@/store/anonAuthStore';
 import { requestNotificationPermission } from '@/utils/reminderNotifications';
+import { useAuthStore } from '@/store/authStore';
 
 // Call this ONCE, at the app root (app/_layout.tsx), alongside
 // useInitAnonymousAuth. Watches this user's supportChats/{uid} parent doc
@@ -14,7 +15,9 @@ import { requestNotificationPermission } from '@/utils/reminderNotifications';
 // inside HelpSupportChat.tsx — that only works while that screen is
 // open; this works everywhere, including if the app is backgrounded.
 export function useChatAssignmentNotifier() {
-  const uid = useAnonAuthStore((s) => s.uid);
+  //const uid = useAnonAuthStore((s) => s.uid);
+  const { user } = useAuthStore();
+const uid = user?.FirebaseUid ?? null;
   const previousAssignedRef = useRef<string | null | undefined>(undefined);
 
   useEffect(() => {

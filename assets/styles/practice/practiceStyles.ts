@@ -328,4 +328,14 @@ export const getPracticeStyles = (colors: typeof lightColors) =>
             marginHorizontal: moderateScale(16),
             marginBottom: moderateScale(28),
         },
+
+        nidraDesc: {
+            fontFamily: 'SF-Pro-Display',
+            fontWeight: '400',
+            fontSize: moderateScale(12),
+            color: '#FFFFFF',
+            lineHeight: moderateScale(16),
+            marginTop: moderateScale(2),
+            marginBottom: moderateScale(4),
+        },
     })

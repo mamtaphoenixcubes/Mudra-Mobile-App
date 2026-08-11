@@ -25,7 +25,13 @@ const NIDRA_SESSIONS = [
     { id: '4', title: 'Morning Reset Yoga Nidra', duration: '20 min', category: 'Yoga Nidra', image: require('@/assets/images/tabIcons/DeepSleepYogaNidra.png') },
 ]
 
-export default function PracticeNidraSection() {
+export default function PracticeNidraSection({
+    nidras = [],
+    onNidraPress,
+}: {
+    nidras?: any[]
+    onNidraPress: (item: any) => void
+}) {
     const router = useRouter()
     const { colors } = useTheme()
     const styles = getPracticeStyles(colors)
@@ -41,34 +47,54 @@ export default function PracticeNidraSection() {
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={styles.nidraScrollContent}
             >
-                {NIDRA_SESSIONS.map((item) => (
-                    <TouchableOpacity
-                        key={item.id}
-                        style={styles.nidraCard}
-                        activeOpacity={0.85}
-                        onPress={() => router.push('/(tabs)/nidra')}
-                    >
-                        <View style={styles.nidraImageWrapper}>
-                            <Image source={item.image} style={styles.nidraImage} resizeMode="cover" />
-                            {/* <View style={styles.nidraOverlay} /> */}
-                        </View>
-                        <View style={styles.nidraCardBody}>
-                            <View style={styles.nidraTitleRow}>
-                                <Text style={styles.nidraTitle} numberOfLines={2}>
-                                    {item.title}
+                {nidras.map((item) => {
+                    const thumbnailUrl = item.NidraIntroCard?.ThumbnailImage?.[0]?.url
+                    const categoryName = item.NidraIntroCard?.Category?.Name
+                    const shortDescription = item.NidraIntroCard?.ShortDescription
+
+                    return (
+                        <TouchableOpacity
+                            key={item.documentId}
+                            style={styles.nidraCard}
+                            activeOpacity={0.85}
+                            onPress={() => onNidraPress?.(item)}
+                        >
+                            <View style={styles.nidraImageWrapper}>
+                                <Image
+                                    source={
+                                        thumbnailUrl
+                                            ? {
+                                                uri: thumbnailUrl.startsWith('http')
+                                                    ? thumbnailUrl
+                                                    : `${process.env.EXPO_PUBLIC_IMAGE_API_URL}${thumbnailUrl}`
+                                            }
+                                            : require('@/assets/images/tabIcons/DeepSleepYogaNidra.png')
+                                    }
+                                    style={styles.nidraImage}
+                                    resizeMode="cover"
+                                />
+                            </View>
+                            <View style={styles.nidraCardBody}>
+                                <View style={styles.nidraTitleRow}>
+                                    <Text style={styles.nidraTitle} numberOfLines={2}>
+                                        {item.Name}
+                                    </Text>
+                                    <View style={styles.nidraPlayBtn}>
+                                        <PlayIcon />
+                                    </View>
+                                </View>
+                                <Text style={styles.nidraDesc} numberOfLines={2} ellipsizeMode="tail">
+                                    {shortDescription}
                                 </Text>
-                                <View style={styles.nidraPlayBtn}>
-                                    <PlayIcon />
+                                <View style={styles.nidraMetaRow}>
+                                    <Text style={styles.nidraMeta}>{item.Duration} min</Text>
+                                    <View style={styles.nidraMetaDot} />
+                                    <Text style={styles.nidraMeta}>{categoryName ?? item.Elements}</Text>
                                 </View>
                             </View>
-                            <View style={styles.nidraMetaRow}>
-                                <Text style={styles.nidraMeta}>{item.duration}</Text>
-                                <View style={styles.nidraMetaDot} />
-                                <Text style={styles.nidraMeta}>{item.category}</Text>
-                            </View>
-                        </View>
-                    </TouchableOpacity>
-                ))}
+                        </TouchableOpacity>
+                    )
+                })}
             </ScrollView>
         </View>
     )

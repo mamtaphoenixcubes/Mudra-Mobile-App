@@ -5,6 +5,7 @@ import { getAuth } from 'firebase/auth';
 const firebaseConfig = {
     apiKey: "AIzaSyDLKJX9R75Mpr4A-X5YKJAatz6y2ZjoUCA",
     authDomain: "mudras-e2730.firebaseapp.com",
+    databaseURL: "https://mudras-e2730-default-rtdb.firebaseio.com",
     projectId: "mudras-e2730",
     storageBucket: "mudras-e2730.firebasestorage.app",
     messagingSenderId: "785282488307",
