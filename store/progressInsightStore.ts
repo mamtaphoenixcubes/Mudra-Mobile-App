@@ -5,8 +5,9 @@ interface ProgressInsightStore {
   goal: any | null;
   overview: any | null;
   summary: any | null;
-  distribution: any |null;
+  distribution: any | null;
   analytics: any | null;
+  analysis: any | null;
 
   loading: boolean;
   error: string | null;
@@ -39,6 +40,11 @@ interface ProgressInsightStore {
     profileDocumentId: string
   ) => Promise<void>;
 
+  fetchAnalysis: (
+    profileDocumentId: string,
+    type?: string
+  ) => Promise<void>;
+
   clearProgressData: () => void;
 }
 
@@ -49,6 +55,7 @@ export const useProgressInsightStore =
     summary: null,
     distribution: null,
     analytics: null,
+    analysis: null,
 
     loading: false,
     error: null,
@@ -300,6 +307,50 @@ export const useProgressInsightStore =
     },
 
     //-------------------------------------
+    // Analysis
+    //-------------------------------------
+
+    fetchAnalysis: async (
+      profileDocumentId,
+      type = 'daily'
+    ) => {
+      try {
+        set({
+          loading: true,
+          error: null,
+        });
+
+        const response =
+          await axios.get(
+            `${process.env.EXPO_PUBLIC_API_URL}/progress-insight/analysis`,
+            {
+              params: {
+                profileDocumentId,
+                type,
+              },
+            }
+          );
+
+        set({
+          analysis:
+            response.data.data ??
+            response.data,
+          loading: false,
+        });
+      } catch (error: any) {
+        console.log(
+          'ANALYSIS ERROR:',
+          error
+        );
+
+        set({
+          loading: false,
+          error: error.message,
+        });
+      }
+    },
+
+    //-------------------------------------
     // Clear
     //-------------------------------------
 
@@ -310,6 +361,7 @@ export const useProgressInsightStore =
         summary: null,
         distribution: null,
         analytics: null,
+        analysis: null,
         error: null,
       });
     },
