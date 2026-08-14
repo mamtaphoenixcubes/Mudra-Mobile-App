@@ -38,7 +38,7 @@ export default function HowToPractice({ instructions, onViewGuide }: Props) {
                 <Text style={styles.practiceHeadingText}>How to Practice</Text>
             </View>
 
-            <Text style={styles.practiceInstructions}>{instructions}</Text>
+            <Text style={styles.practiceInstructions} numberOfLines={2} ellipsizeMode="tail">{instructions}</Text>
 
             <TouchableOpacity style={styles.practiceGuideBtn} onPress={onViewGuide} activeOpacity={0.75}>
                 {isDark ? <PlayBlackWhite width={18} height={18} /> : <PlayBlack width={18} height={18} />}

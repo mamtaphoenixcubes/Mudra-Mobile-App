@@ -93,20 +93,22 @@ export default function Login() {
 
             const res = await axios.post(url, payload);
 
-            console.log(
-                'LOGIN RESPONSE:',
-                JSON.stringify(res?.data, null, 2)
-            );
+          
 
             if (res?.data?.success) {
 
                 const userData =
                     res?.data?.data?.user ||
                     res?.data?.user;
-
+  console.log(
+                'LOGIN RESPONSE:',
+                userData
+            );
                 const authToken =
                     res?.data?.data?.refreshToken ||
                     res?.data?.refreshToken;
+
+                    console.log('userData before setAuth:', JSON.stringify(userData, null, 2));
 
                 await setAuth({
                     user: userData,

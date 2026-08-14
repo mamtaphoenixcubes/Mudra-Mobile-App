@@ -12,11 +12,11 @@ import {
     Animated,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { useTheme } from '@/constants/ThemeContext';
 import AppHeader from '@/components/common/AppHeader';
 
-import { auth, db } from '@/constants/firebase';
-import { signInAnonymously, onAuthStateChanged } from 'firebase/auth';
+import { db } from '@/constants/firebase';
 import {
     collection,
     addDoc,
@@ -25,7 +25,9 @@ import {
     onSnapshot,
     serverTimestamp,
     Timestamp,
-    doc, setDoc
+    doc,
+    setDoc,
+    getDoc,
 } from 'firebase/firestore';
 import { useAnonAuthStore } from '@/store/anonAuthStore';
 import { useAuthStore } from '@/store/authStore';
@@ -34,7 +36,6 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const moderateScale = (size: number, factor = 0.5) =>
     size + ((SCREEN_WIDTH - 375) / 375) * size * factor;
 
-// ── FAQ data — canned Q&A, still local, but now WRITES its replies to Firestore too ──
 interface FAQItem {
     id: string;
     question: string;
@@ -85,7 +86,6 @@ interface Message {
     timestamp?: Timestamp | null;
 }
 
-// ── Avatars ──────────────────────────────────────────────────────────────────
 const BotAvatar = ({ color, icon = 'sparkles' }: { color: string; icon?: keyof typeof Ionicons.glyphMap }) => (
     <View style={[styles.avatar, { backgroundColor: color }]}>
         <Ionicons name={icon} size={14} color="#FFFFFF" />
@@ -98,7 +98,6 @@ const UserAvatar = ({ color, textColor }: { color: string; textColor: string }) 
     </View>
 );
 
-// ── Typing indicator — three bouncing dots ──────────────────────────────────
 const TypingIndicator = ({ bubbleColor, dotColor }: { bubbleColor: string; dotColor: string }) => {
     const dot1 = useRef(new Animated.Value(0)).current;
     const dot2 = useRef(new Animated.Value(0)).current;
@@ -138,42 +137,57 @@ const TypingIndicator = ({ bubbleColor, dotColor }: { bubbleColor: string; dotCo
 
 export default function HelpSupportChat() {
     const { colors } = useTheme();
-    //const [uid, setUid] = useState<string | null>(null);
-    //const uid = useAnonAuthStore((s) => s.uid);
-    const { user } = useAuthStore();
-    const uid = user?.FirebaseUid ?? null;
+    const router = useRouter();
 
-    // console.log('Current Firebase Auth uid:', auth.currentUser?.uid);
-    //     console.log('Chat doc uid being used:', uid);
+    const { user } = useAuthStore();
+    const anonUid = useAnonAuthStore((s) => s.uid);
+    const isLoggedIn = !!user?.FirebaseUid;
+
+    const [guestMode, setGuestMode] = useState(false);
+    const [showEntryPrompt, setShowEntryPrompt] = useState(!isLoggedIn);
+
+    const uid = isLoggedIn ? user?.FirebaseUid ?? null : guestMode ? anonUid : null;
+
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState('');
     const [isBotTyping, setIsBotTyping] = useState(false);
     const scrollRef = useRef<ScrollView>(null);
     const [assignedToName, setAssignedToName] = useState<string | null>(null);
 
-    // ── Step 1: sign in anonymously so Firestore rules can identify this device ──
-    // useEffect(() => {
-    //     const unsubscribeAuth = onAuthStateChanged(auth, (firebaseUser) => {
-    //         if (firebaseUser) {
-    //             setUid(firebaseUser.uid);
-    //         } else {
-    //             signInAnonymously(auth).catch((err) => {
-    //                 console.log('Anonymous sign-in error:', err);
-    //             });
-    //         }
-    //     });
-    //     return unsubscribeAuth;
-    // }, []);
-
-    // ── Step 2: once signed in, listen live for this chat's messages ──
     useEffect(() => {
-        if (!uid) return;
+        if (isLoggedIn) {
+            setShowEntryPrompt(false);
+            setGuestMode(false);
+        }
+    }, [isLoggedIn]);
 
-        setDoc(doc(db, 'supportChats', uid), {
-            assignmentStatus: 'unassigned',
-            assignedTo: null,
-            assignedToName: null,
-        }, { merge: true }).catch((err) => console.log('Init chat doc error:', err));
+    useEffect(() => {
+        if (!uid) {
+            return;
+        }
+
+        const chatDocRef = doc(db, 'supportChats', uid);
+
+        getDoc(chatDocRef).then((snapshot) => {
+            if (!snapshot.exists()) {
+                setDoc(chatDocRef, {
+                    name: user?.fullName || user?.username || null,
+                    isGuest: !isLoggedIn,
+                    assignmentStatus: 'unassigned',
+                    assignedTo: null,
+                    assignedToName: null,
+                }).catch((err) => console.log('Init chat doc error:', err));
+            } else {
+                setDoc(
+                    chatDocRef,
+                    {
+                        name: user?.fullName || user?.username || null,
+                        isGuest: !isLoggedIn,
+                    },
+                    { merge: true }
+                ).catch((err) => console.log('Update chat doc error:', err));
+            }
+        });
 
         const messagesRef = collection(db, 'supportChats', uid, 'messages');
         const q = query(messagesRef, orderBy('timestamp', 'asc'));
@@ -181,14 +195,13 @@ export default function HelpSupportChat() {
         const unsubscribeSnapshot = onSnapshot(
             q,
             (snapshot) => {
-                const loaded: Message[] = snapshot.docs.map((doc) => ({
-                    id: doc.id,
-                    sender: doc.data().sender,
-                    text: doc.data().text,
-                    timestamp: doc.data().timestamp ?? null,
+                const loaded: Message[] = snapshot.docs.map((docSnap) => ({
+                    id: docSnap.id,
+                    sender: docSnap.data().sender,
+                    text: docSnap.data().text,
+                    timestamp: docSnap.data().timestamp ?? null,
                 }));
 
-                // First time in this chat, seed a greeting if there's nothing yet
                 if (loaded.length === 0) {
                     addDoc(messagesRef, {
                         sender: 'bot',
@@ -206,35 +219,30 @@ export default function HelpSupportChat() {
             }
         );
 
-        return unsubscribeSnapshot;
+        return () => {
+            unsubscribeSnapshot();
+        };
     }, [uid]);
 
-    // ── Step 3: listen live for who's assigned to this chat ──
     useEffect(() => {
-        if (!uid) return;
+        if (!uid) {
+            return;
+        }
 
         const chatDocRef = doc(db, 'supportChats', uid);
         const unsubscribe = onSnapshot(chatDocRef, (snapshot) => {
             setAssignedToName(snapshot.data()?.assignedToName ?? null);
         });
 
-        return unsubscribe;
+        return () => {
+            unsubscribe();
+        };
     }, [uid]);
 
     const scrollToBottom = () => {
         setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
     };
 
-    // ── Writes a message document to Firestore (replaces old local addMessage) ──
-    // const writeMessage = async (sender: 'bot' | 'user', text: string) => {
-    //     if (!uid) return;
-    //     const messagesRef = collection(db, 'supportChats', uid, 'messages');
-    //     await addDoc(messagesRef, {
-    //         sender,
-    //         text,
-    //         timestamp: serverTimestamp(),
-    //     });
-    // };
     const writeMessage = async (sender: 'bot' | 'user', text: string) => {
         if (!uid) return;
         const messagesRef = collection(db, 'supportChats', uid, 'messages');
@@ -279,6 +287,17 @@ export default function HelpSupportChat() {
         respondAsBot(match ? match.answer : FALLBACK_ANSWER);
     };
 
+    const handleChooseLogin = () => {
+        router.push({
+            pathname: '/auth/login',
+            params: { redirect: '/chat' },
+        });
+    };
+
+    const handleChooseGuest = () => {
+        setGuestMode(true);
+        setShowEntryPrompt(false);
+    };
 
     const showSuggestions = !messages.some((m) => m.sender === 'user');
     const hasHumanJoined = messages.some((m) => m.sender === 'admin');
@@ -306,54 +325,81 @@ export default function HelpSupportChat() {
                 contentContainerStyle={styles.messagesContent}
                 showsVerticalScrollIndicator={false}
             >
-                {messages.map((msg) => (
-                    <View
-                        key={msg.id}
-                        style={[
-                            styles.bubbleRow,
-                            msg.sender === 'user' ? styles.bubbleRowUser : styles.bubbleRowBot,
-                        ]}
-                    >
-                        {(msg.sender === 'bot' || msg.sender === 'admin') && (
-                            <BotAvatar color={colors.primary} icon={msg.sender === 'admin' ? 'headset' : 'sparkles'} />
-                        )}
+                {showEntryPrompt && (
+                    <View style={[styles.bubbleRow, styles.bubbleRowBot]}>
+                        <BotAvatar color={colors.primary} />
+                        <View style={[styles.bubble, styles.botBubbleShape, { backgroundColor: colors.surfaceAlt, maxWidth: '80%' }]}>
+                            <Text style={[styles.bubbleText, { color: colors.text }]}>
+                                Welcome to Mudras Support!{'\n'}For a better experience, we recommend you log in and relaunch chat.
+                            </Text>
 
+                            <TouchableOpacity
+                                style={[styles.promptBtn, { borderColor: colors.primary }]}
+                                activeOpacity={0.7}
+                                onPress={handleChooseLogin}
+                            >
+                                <Text style={[styles.promptBtnText, { color: colors.primary }]}>
+                                    I would like to proceed with the login
+                                </Text>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
+                                style={[styles.promptBtn, { borderColor: colors.dividerDark, marginTop: moderateScale(8) }]}
+                                activeOpacity={0.7}
+                                onPress={handleChooseGuest}
+                            >
+                                <Text style={[styles.promptBtnText, { color: colors.textSub }]}>
+                                    Proceed without logging in
+                                </Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                )}
+
+                {!showEntryPrompt &&
+                    messages.map((msg) => (
                         <View
-                            style={[
-                                styles.bubble,
-                                msg.sender === 'user'
-                                    ? [styles.userBubbleShape, { backgroundColor: colors.primary }]
-                                    : [styles.botBubbleShape, { backgroundColor: colors.surfaceAlt }],
-                            ]}
+                            key={msg.id}
+                            style={[styles.bubbleRow, msg.sender === 'user' ? styles.bubbleRowUser : styles.bubbleRowBot]}
                         >
-                            <Text
+                            {(msg.sender === 'bot' || msg.sender === 'admin') && (
+                                <BotAvatar color={colors.primary} icon={msg.sender === 'admin' ? 'headset' : 'sparkles'} />
+                            )}
+
+                            <View
                                 style={[
-                                    styles.bubbleText,
-                                    { color: msg.sender === 'user' ? '#FFFFFF' : colors.text },
+                                    styles.bubble,
+                                    msg.sender === 'user'
+                                        ? [styles.userBubbleShape, { backgroundColor: colors.primary }]
+                                        : [styles.botBubbleShape, { backgroundColor: colors.surfaceAlt }],
                                 ]}
                             >
-                                {msg.text}
-                            </Text>
+                                <Text
+                                    style={[
+                                        styles.bubbleText,
+                                        { color: msg.sender === 'user' ? '#FFFFFF' : colors.text },
+                                    ]}
+                                >
+                                    {msg.text}
+                                </Text>
+                            </View>
+
+                            {msg.sender === 'user' && (
+                                <UserAvatar color={colors.primaryLight} textColor={colors.primary as string} />
+                            )}
                         </View>
+                    ))}
 
-                        {msg.sender === 'user' && (
-                            <UserAvatar color={colors.primaryLight} textColor={colors.primary as string} />
-                        )}
-                    </View>
-                ))}
-
-                {isBotTyping && (
+                {!showEntryPrompt && isBotTyping && (
                     <View style={[styles.bubbleRow, styles.bubbleRowBot]}>
                         <BotAvatar color={colors.primary} />
                         <TypingIndicator bubbleColor={colors.surfaceAlt} dotColor={colors.textMuted as string} />
                     </View>
                 )}
 
-                {showSuggestions && (
+                {!showEntryPrompt && showSuggestions && (
                     <View style={styles.suggestionsWrap}>
-                        <Text style={[styles.suggestionsLabel, { color: colors.textMuted }]}>
-                            SUGGESTED QUESTIONS
-                        </Text>
+                        <Text style={[styles.suggestionsLabel, { color: colors.textMuted }]}>SUGGESTED QUESTIONS</Text>
                         {FAQ_ITEMS.map((faq) => (
                             <TouchableOpacity
                                 key={faq.id}
@@ -361,9 +407,7 @@ export default function HelpSupportChat() {
                                 activeOpacity={0.7}
                                 onPress={() => handleQuickReply(faq)}
                             >
-                                <Text style={[styles.suggestionText, { color: colors.text }]}>
-                                    {faq.question}
-                                </Text>
+                                <Text style={[styles.suggestionText, { color: colors.text }]}>{faq.question}</Text>
                                 <Ionicons name="chevron-forward" size={16} color={colors.textMuted as string} />
                             </TouchableOpacity>
                         ))}
@@ -371,29 +415,28 @@ export default function HelpSupportChat() {
                 )}
             </ScrollView>
 
-            <View style={[styles.inputRow, { borderTopColor: colors.dividerDark, backgroundColor: colors.background }]}>
-                <TextInput
-                    value={input}
-                    onChangeText={setInput}
-                    placeholder="Type a message..."
-                    placeholderTextColor={colors.textMuted}
-                    style={[styles.input, { color: colors.text, backgroundColor: colors.inputBg }]}
-                    returnKeyType="send"
-                    onSubmitEditing={handleSend}
-                    multiline
-                />
-                <TouchableOpacity
-                    onPress={handleSend}
-                    disabled={!input.trim()}
-                    activeOpacity={0.85}
-                    style={[
-                        styles.sendBtn,
-                        { backgroundColor: input.trim() ? colors.primary : colors.dividerDark },
-                    ]}
-                >
-                    <Ionicons name="arrow-up" size={18} color="#FFFFFF" />
-                </TouchableOpacity>
-            </View>
+            {!showEntryPrompt && (
+                <View style={[styles.inputRow, { borderTopColor: colors.dividerDark, backgroundColor: colors.background }]}>
+                    <TextInput
+                        value={input}
+                        onChangeText={setInput}
+                        placeholder="Type a message..."
+                        placeholderTextColor={colors.textMuted}
+                        style={[styles.input, { color: colors.text, backgroundColor: colors.inputBg }]}
+                        returnKeyType="send"
+                        onSubmitEditing={handleSend}
+                        multiline
+                    />
+                    <TouchableOpacity
+                        onPress={handleSend}
+                        disabled={!input.trim()}
+                        activeOpacity={0.85}
+                        style={[styles.sendBtn, { backgroundColor: input.trim() ? colors.primary : colors.dividerDark }]}
+                    >
+                        <Ionicons name="arrow-up" size={18} color="#FFFFFF" />
+                    </TouchableOpacity>
+                </View>
+            )}
         </KeyboardAvoidingView>
     );
 }
@@ -471,6 +514,19 @@ const styles = StyleSheet.create({
         fontFamily: 'SF-Pro-Display',
         fontSize: moderateScale(14),
         lineHeight: moderateScale(20),
+    },
+    promptBtn: {
+        marginTop: moderateScale(10),
+        borderWidth: 1,
+        borderRadius: moderateScale(18),
+        paddingVertical: moderateScale(9),
+        paddingHorizontal: moderateScale(14),
+        alignItems: 'center',
+    },
+    promptBtnText: {
+        fontFamily: 'SF-Pro-Display',
+        fontSize: moderateScale(13),
+        fontWeight: '600',
     },
     typingRow: {
         flexDirection: 'row',

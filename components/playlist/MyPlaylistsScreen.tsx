@@ -9,7 +9,7 @@ import {
     Pressable,
     StyleSheet,
     Dimensions,
-     RefreshControl,
+    RefreshControl,
 } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -27,49 +27,49 @@ const moderateScale = (size: number, factor = 0.5) =>
 export default function MyPlaylistsScreen() {
     const { colors } = useTheme();
     const { token, user } = useAuthStore();
-const [refreshing, setRefreshing] = useState(false);
+    const [refreshing, setRefreshing] = useState(false);
     const audioPlaylists = usePlaylistStore((s) => s.audioPlaylists);
-const videoPlaylists = usePlaylistStore((s) => s.videoPlaylists);
+    const videoPlaylists = usePlaylistStore((s) => s.videoPlaylists);
     const isLoadingPlaylists = usePlaylistStore((s) => s.isLoadingPlaylists);
     const createPlaylist = usePlaylistStore((s) => s.createPlaylist);
     const fetchUserPlaylists = usePlaylistStore((s) => s.fetchUserPlaylists);
     const fetchVideoPlaylists = usePlaylistStore(
-    (s) => s.fetchVideoPlaylists
-);
-const [selectedTab, setSelectedTab] = useState<'audio' | 'video'>('audio');
+        (s) => s.fetchVideoPlaylists
+    );
+    const [selectedTab, setSelectedTab] = useState<'audio' | 'video'>('audio');
     const [createVisible, setCreateVisible] = useState(false);
     const [newName, setNewName] = useState('');
     const [nameFocused, setNameFocused] = useState(false);
-const clearMudras = useMudraStore((state) => state.clearSelectedMudra);
+    const clearMudras = useMudraStore((state) => state.clearSelectedMudra);
     const deleteRemotePlaylist = usePlaylistStore((s) => s.deleteRemotePlaylist);
     const deleteVideoPlaylist = usePlaylistStore(
-    (s) => s.deleteVideoPlaylist
-);
+        (s) => s.deleteVideoPlaylist
+    );
     const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null);
-useEffect(() => {
-  clearMudras();
-}, []);
- const handleConfirmDelete = async () => {
-    if (!deleteTarget) return;
+    useEffect(() => {
+        clearMudras();
+    }, []);
+    const handleConfirmDelete = async () => {
+        if (!deleteTarget) return;
 
-    try {
-        if (selectedTab === 'audio') {
-            await deleteRemotePlaylist(
-                deleteTarget.id,
-                token || undefined
-            );
-        } else {
-            await deleteVideoPlaylist(
-                deleteTarget.id,
-                token || undefined
-            );
+        try {
+            if (selectedTab === 'audio') {
+                await deleteRemotePlaylist(
+                    deleteTarget.id,
+                    token || undefined
+                );
+            } else {
+                await deleteVideoPlaylist(
+                    deleteTarget.id,
+                    token || undefined
+                );
+            }
+
+            setDeleteTarget(null);
+        } catch (error) {
+            console.log(error);
         }
-
-        setDeleteTarget(null);
-    } catch (error) {
-        console.log(error);
-    }
-};
+    };
 
     const profileDocumentId: string = user?.id || user?.profileDocumentId || '';
 
@@ -77,60 +77,74 @@ useEffect(() => {
         if (!profileDocumentId) return;
         fetchUserPlaylists(profileDocumentId, token || undefined);
     }, [profileDocumentId, token, fetchUserPlaylists]);
-       useEffect(() => {
+    useEffect(() => {
         if (!profileDocumentId) return;
 
-                    if (selectedTab === 'audio') {
-                        fetchUserPlaylists(
-                            profileDocumentId,
-                            token || undefined
-                        );
-                    } else {
-                        fetchVideoPlaylists(
-                            profileDocumentId,
-                            token || undefined
-                        );
-                    }
-                }, [
-                    selectedTab,
-                    profileDocumentId,
-                    token,
-                ]);
-
-const playlists =
-    selectedTab === 'audio'
-        ? audioPlaylists
-        : videoPlaylists;
-
-    const handleCreate = () => {
-        if (!newName.trim()) return;
-        createPlaylist(newName);
-        setNewName('');
-        setCreateVisible(false);
-    };
-const onRefresh = async () => {
-    if (!profileDocumentId) return;
-
-    try {
-        setRefreshing(true);
-
         if (selectedTab === 'audio') {
-            await fetchUserPlaylists(
+            fetchUserPlaylists(
                 profileDocumentId,
                 token || undefined
             );
         } else {
-            await fetchVideoPlaylists(
+            fetchVideoPlaylists(
                 profileDocumentId,
                 token || undefined
             );
         }
-    } catch (error) {
-        console.log(error);
-    } finally {
-        setRefreshing(false);
-    }
-};
+    }, [
+        selectedTab,
+        profileDocumentId,
+        token,
+    ]);
+
+    const playlists =
+        selectedTab === 'audio'
+            ? audioPlaylists
+            : videoPlaylists;
+
+    // const handleCreate = () => {
+    //     if (!newName.trim()) return;
+    //     createPlaylist(newName);
+    //     setNewName('');
+    //     setCreateVisible(false);
+    // };
+    const handleCreate = async () => {
+        if (!newName.trim()) return;
+        const created = createPlaylist(newName); // local createPlaylist is synchronous, not async — returns Playlist directly
+        setNewName('');
+        setCreateVisible(false);
+
+        router.push({
+            pathname: '/playlistcategoryselect',
+            params: {
+                playlistId: created.id,
+                playlistName: newName.trim(),
+            },
+        });
+    };
+    const onRefresh = async () => {
+        if (!profileDocumentId) return;
+
+        try {
+            setRefreshing(true);
+
+            if (selectedTab === 'audio') {
+                await fetchUserPlaylists(
+                    profileDocumentId,
+                    token || undefined
+                );
+            } else {
+                await fetchVideoPlaylists(
+                    profileDocumentId,
+                    token || undefined
+                );
+            }
+        } catch (error) {
+            console.log(error);
+        } finally {
+            setRefreshing(false);
+        }
+    };
     return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>
             {/* Header */}
@@ -148,40 +162,40 @@ const onRefresh = async () => {
 
             <Text style={[styles.pageTitle, { color: colors.text }]}>My Playlists</Text>
             <View style={styles.tabsContainer}>
-                                <TouchableOpacity
-                                        style={[
-                                                styles.tab,
-                                                { backgroundColor: selectedTab === 'audio' ? colors.primaryLight : 'transparent' },
-                                        ]}
-                                        onPress={() => setSelectedTab('audio')}
-                                >
-                                        <Text
-                                                style={[
-                                                        styles.tabText,
-                                                        { color: selectedTab === 'audio' ? colors.primary : colors.textSub },
-                                                ]}
-                                        >
-                                                Audio
-                                        </Text>
-                                </TouchableOpacity>
+                <TouchableOpacity
+                    style={[
+                        styles.tab,
+                        { backgroundColor: selectedTab === 'audio' ? colors.primaryLight : 'transparent' },
+                    ]}
+                    onPress={() => setSelectedTab('audio')}
+                >
+                    <Text
+                        style={[
+                            styles.tabText,
+                            { color: selectedTab === 'audio' ? colors.primary : colors.textSub },
+                        ]}
+                    >
+                        Audio
+                    </Text>
+                </TouchableOpacity>
 
-                                <TouchableOpacity
-                                        style={[
-                                                styles.tab,
-                                                { backgroundColor: selectedTab === 'video' ? colors.primaryLight : 'transparent' },
-                                        ]}
-                                        onPress={() => setSelectedTab('video')}
-                                >
-                                        <Text
-                                                style={[
-                                                        styles.tabText,
-                                                        { color: selectedTab === 'video' ? colors.primary : colors.textSub },
-                                                ]}
-                                        >
-                                                Video
-                                        </Text>
-                                </TouchableOpacity>
-                        </View>
+                <TouchableOpacity
+                    style={[
+                        styles.tab,
+                        { backgroundColor: selectedTab === 'video' ? colors.primaryLight : 'transparent' },
+                    ]}
+                    onPress={() => setSelectedTab('video')}
+                >
+                    <Text
+                        style={[
+                            styles.tabText,
+                            { color: selectedTab === 'video' ? colors.primary : colors.textSub },
+                        ]}
+                    >
+                        Video
+                    </Text>
+                </TouchableOpacity>
+            </View>
 
             {/* List */}
             {isLoadingPlaylists ? (
@@ -200,22 +214,22 @@ const onRefresh = async () => {
                 </View>
             ) : (
                 <ScrollView
-    contentContainerStyle={styles.listContent}
-    showsVerticalScrollIndicator={false}
-    refreshControl={
-        <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor={colors.primary}
-            colors={[colors.primary]}
-        />
-    }
->
+                    contentContainerStyle={styles.listContent}
+                    showsVerticalScrollIndicator={false}
+                    refreshControl={
+                        <RefreshControl
+                            refreshing={refreshing}
+                            onRefresh={onRefresh}
+                            tintColor={colors.primary}
+                            colors={[colors.primary]}
+                        />
+                    }
+                >
                     {playlists.map((playlist) => {
                         const total =
-    selectedTab === 'audio'
-        ? (playlist.audios?.length || 0)
-        : (playlist.videos?.length || 0);
+                            selectedTab === 'audio'
+                                ? (playlist.audios?.length || 0)
+                                : (playlist.videos?.length || 0);
                         const playlistId = String(playlist.documentId || playlist.id || '');
 
                         return (
@@ -241,11 +255,11 @@ const onRefresh = async () => {
                                         <Text style={[styles.cardName, { color: colors.text }]} numberOfLines={1}>
                                             {playlist.title || 'Untitled playlist'}
                                         </Text>
-                                       <Text style={[styles.cardSub, { color: colors.textSub }]}>
-                                        {total === 0
-                                            ? `Empty ${selectedTab} playlist`
-                                            : `${total} ${selectedTab === 'audio' ? 'audio' : 'video'}${total > 1 ? 's' : ''}`}
-                                    </Text>
+                                        <Text style={[styles.cardSub, { color: colors.textSub }]}>
+                                            {total === 0
+                                                ? `Empty ${selectedTab} playlist`
+                                                : `${total} ${selectedTab === 'audio' ? 'audio' : 'video'}${total > 1 ? 's' : ''}`}
+                                        </Text>
                                     </View>
                                 </TouchableOpacity>
 
@@ -498,23 +512,23 @@ const styles = StyleSheet.create({
         fontWeight: '500',
     },
 
-tabsContainer: {
-                flexDirection: 'row',
-                gap: moderateScale(6),
-                marginHorizontal: moderateScale(16),
-                marginBottom: moderateScale(12),
-        },
+    tabsContainer: {
+        flexDirection: 'row',
+        gap: moderateScale(6),
+        marginHorizontal: moderateScale(16),
+        marginBottom: moderateScale(12),
+    },
 
-        tab: {
-                flex: 1,
-                alignItems: 'center',
-                justifyContent: 'center',
-                paddingVertical: moderateScale(8),
-                borderRadius: moderateScale(10),
-        },
-        tabText: {
-                fontFamily: 'SF-Pro-Display',
-                fontSize: moderateScale(14),
-                fontWeight: '500',
-        },
+    tab: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: moderateScale(8),
+        borderRadius: moderateScale(10),
+    },
+    tabText: {
+        fontFamily: 'SF-Pro-Display',
+        fontSize: moderateScale(14),
+        fontWeight: '500',
+    },
 });

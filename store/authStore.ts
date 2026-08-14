@@ -44,6 +44,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   setAuth: async (data) => {
     try {
 
+     // console.log('setAuth received data.user:', JSON.stringify(data.user, null, 2));
+
       const authData = {
         user: data.user,
         token: data.token,
@@ -76,6 +78,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         auth: authData,
         isLoggedIn: true,
       });
+
+     // console.log('authStore user after set:', useAuthStore.getState().user);
     } catch (error) {
       console.log('Auth Storage Error:', error);
     }

@@ -127,33 +127,33 @@ export default function PracticeScreen() {
     |--------------------------------------------------------------------------
     */
 
-    useEffect(() => {
-        console.log(
-            'Practice Mudra Loading:',
-            mudraLoading
-        )
+    // useEffect(() => {
+    //     console.log(
+    //         'Practice Mudra Loading:',
+    //         mudraLoading
+    //     )
 
-        console.log(
-            'Practice Mudra Data:',
-            fetchedMudras
-        )
+    //     console.log(
+    //         'Practice Mudra Data:',
+    //         fetchedMudras
+    //     )
 
-        console.log(
-            'Practice Mudras Array:',
-            mudrasArray
-        )
+    //     console.log(
+    //         'Practice Mudras Array:',
+    //         mudrasArray
+    //     )
 
-        console.log(
-            'Practice Mudras Count:',
-            mudrasArray.length
-        )
-    }, [fetchedMudras, mudraLoading])
+    //     console.log(
+    //         'Practice Mudras Count:',
+    //         mudrasArray.length
+    //     )
+    // }, [fetchedMudras, mudraLoading])
 
-    useEffect(() => {
-        console.log('Practice Nidra Loading:', nidraLoading)
-        console.log('Practice Nidras Data:', JSON.stringify(fetchedNidras, null, 2))
-        console.log('Practice Nidras Count:', fetchedNidras?.length ?? 0)
-    }, [fetchedNidras, nidraLoading])
+    // useEffect(() => {
+    //     console.log('Practice Nidra Loading:', nidraLoading)
+    //     console.log('Practice Nidras Data:', JSON.stringify(fetchedNidras, null, 2))
+    //     console.log('Practice Nidras Count:', fetchedNidras?.length ?? 0)
+    // }, [fetchedNidras, nidraLoading])
 
     /*
     |--------------------------------------------------------------------------

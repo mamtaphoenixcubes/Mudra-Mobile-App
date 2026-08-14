@@ -55,6 +55,7 @@ export default function RootLayout() {
               <Stack.Screen name="plandetail" options={{ headerShown: false }} />
               <Stack.Screen name="myplaylists" options={{ headerShown: false }} />
               <Stack.Screen name="playlistdetail" options={{ headerShown: false }} />
+              <Stack.Screen name="playlistcategoryselect" options={{ headerShown: false }} />
 
               <Stack.Screen name="search" options={{ headerShown: false }} />
               <Stack.Screen name="dailystreak" options={{ headerShown: false }} />

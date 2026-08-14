@@ -15,6 +15,7 @@ import { usePlaylistStore } from '@/store/playlistStore';
 import AppHeader from '@/components/common/AppHeader';
 import StandaloneTabBar from '@/components/home/StandaloneTabBar';
 import ConfirmModal from '@/components/common/ConfirmModal';
+import CreatePlaylistModal from '@/components/playlist/CreatePlaylistModal';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const moderateScale = (size: number, factor = 0.5) =>
@@ -30,18 +31,18 @@ export default function PlaylistDetailScreen() {
     const { id } = useLocalSearchParams();
     const playlistId = typeof id === 'string' ? id : '';
 
-   const audioPlaylists = usePlaylistStore((s) => s.audioPlaylists);
-const videoPlaylists = usePlaylistStore((s) => s.videoPlaylists);
-   const removeAudiosFromPlaylist = usePlaylistStore(
-  (s) => s.removeAudiosFromPlaylist
-);
-const removeVideosFromPlaylist = usePlaylistStore(
-    (s) => s.removeVideosFromPlaylist
-);
-type AudioFilter = 'all' | 'mudra' | 'nidra';
+    const audioPlaylists = usePlaylistStore((s) => s.audioPlaylists);
+    const videoPlaylists = usePlaylistStore((s) => s.videoPlaylists);
+    const removeAudiosFromPlaylist = usePlaylistStore(
+        (s) => s.removeAudiosFromPlaylist
+    );
+    const removeVideosFromPlaylist = usePlaylistStore(
+        (s) => s.removeVideosFromPlaylist
+    );
+    type AudioFilter = 'all' | 'mudra' | 'nidra';
 
-const [audioFilter, setAudioFilter] = useState<AudioFilter>('all');
-const [filterMenuVisible, setFilterMenuVisible] = useState(false);
+    const [audioFilter, setAudioFilter] = useState<AudioFilter>('all');
+    const [filterMenuVisible, setFilterMenuVisible] = useState(false);
     const deletePlaylist = usePlaylistStore((s) => s.deletePlaylist);
 
     const [tab, setTab] = useState<FilterTab>('all');
@@ -50,89 +51,91 @@ const [filterMenuVisible, setFilterMenuVisible] = useState(false);
     const [selectionMode, setSelectionMode] = useState(false);
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [deleteConfirmVisible, setDeleteConfirmVisible] = useState(false);
+    const createPlaylist = usePlaylistStore((s) => s.createPlaylist);
+    const [createModalVisible, setCreateModalVisible] = useState(false);
 
-   const playlist = useMemo(() => {
-    return (
-        audioPlaylists.find(
-            (item) => String(item.documentId || item.id) === playlistId
-        ) ||
-        videoPlaylists.find(
-            (item) => String(item.documentId || item.id) === playlistId
-        ) ||
-        null
-    );
-}, [audioPlaylists, videoPlaylists, playlistId]);
+    const playlist = useMemo(() => {
+        return (
+            audioPlaylists.find(
+                (item) => String(item.documentId || item.id) === playlistId
+            ) ||
+            videoPlaylists.find(
+                (item) => String(item.documentId || item.id) === playlistId
+            ) ||
+            null
+        );
+    }, [audioPlaylists, videoPlaylists, playlistId]);
 
-  const mappedSessions = useMemo(() => {
-    if (!playlist) return [];
+    const mappedSessions = useMemo(() => {
+        if (!playlist) return [];
 
-    if (playlist.audios) {
-      return playlist.audios.map((audio) => ({
-    id: String(audio.documentId || audio.id || ''),
-    title: audio.title || 'Untitled audio',
-    duration: audio.durationInSeconds
-        ? formatDuration(audio.durationInSeconds)
-        : '',
-    isVideo: false,
-    thumbnail: audio.thumbnail?.url || null,
-    contentTypeOfAudio: audio.contentTypeOfAudio,
-    media: audio,
-}));
-    }
+        if (playlist.audios) {
+            return playlist.audios.map((audio) => ({
+                id: String(audio.documentId || audio.id || ''),
+                title: audio.title || 'Untitled audio',
+                duration: audio.durationInSeconds
+                    ? formatDuration(audio.durationInSeconds)
+                    : '',
+                isVideo: false,
+                thumbnail: audio.thumbnail?.url || null,
+                contentTypeOfAudio: audio.contentTypeOfAudio,
+                media: audio,
+            }));
+        }
 
-    if (playlist.videos) {
-      return playlist.videos.map((video) => ({
-        id: String(video.documentId || video.id || ''),
-        title: video.title || 'Untitled video',
-        duration: video.durationInSeconds
-            ? formatDuration(video.durationInSeconds)
-            : '',
-        isVideo: true,
-        thumbnail: video.thumbnail?.url || null,
-        contentTypeOfAudio: undefined, // <-- add this
-        media: video,
-    }));
-    }
+        if (playlist.videos) {
+            return playlist.videos.map((video) => ({
+                id: String(video.documentId || video.id || ''),
+                title: video.title || 'Untitled video',
+                duration: video.durationInSeconds
+                    ? formatDuration(video.durationInSeconds)
+                    : '',
+                isVideo: true,
+                thumbnail: video.thumbnail?.url || null,
+                contentTypeOfAudio: undefined, // <-- add this
+                media: video,
+            }));
+        }
 
-    return [];
-}, [playlist]);
+        return [];
+    }, [playlist]);
 
 
     const audioSessions = useMemo(() => mappedSessions.filter((s) => !s.isVideo), [mappedSessions]);
     const videoSessions = useMemo(() => mappedSessions.filter((s) => s.isVideo), [mappedSessions]);
 
-  const handleRemove = (sessionId: string, title: string) => {
-    Alert.alert(
-        'Remove session?',
-        `"${title}" will be removed from this playlist.`,
-        [
-            { text: 'Cancel', style: 'cancel' },
-            {
-                text: 'Remove',
-                style: 'destructive',
-                onPress: async () => {
-                    try {
-                        if (playlist?.audios) {
-                            await removeAudiosFromPlaylist(
-                                playlistId,
-                                [sessionId]
-                            );
-                        } else {
-                            await removeVideosFromPlaylist(
-                                playlistId,
-                                [sessionId]
-                            );
+    const handleRemove = (sessionId: string, title: string) => {
+        Alert.alert(
+            'Remove session?',
+            `"${title}" will be removed from this playlist.`,
+            [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                    text: 'Remove',
+                    style: 'destructive',
+                    onPress: async () => {
+                        try {
+                            if (playlist?.audios) {
+                                await removeAudiosFromPlaylist(
+                                    playlistId,
+                                    [sessionId]
+                                );
+                            } else {
+                                await removeVideosFromPlaylist(
+                                    playlistId,
+                                    [sessionId]
+                                );
+                            }
+                        } catch (error) {
+                            console.log(error);
                         }
-                    } catch (error) {
-                        console.log(error);
-                    }
+                    },
                 },
-            },
-        ]
-    );
-};
+            ]
+        );
+    };
 
-    
+
 
     const enterSelectionMode = () => {
         setMenuVisible(false);
@@ -165,53 +168,53 @@ const [filterMenuVisible, setFilterMenuVisible] = useState(false);
         }
     };
 
-   const handleConfirmDeleteSelected = async () => {
-    try {
-        const ids = Array.from(selectedIds);
+    const handleConfirmDeleteSelected = async () => {
+        try {
+            const ids = Array.from(selectedIds);
 
-        if (playlist?.audios) {
-            await removeAudiosFromPlaylist(
-                playlistId,
-                ids
-            );
-        } else {
-            await removeVideosFromPlaylist(
-                playlistId,
-                ids
-            );
+            if (playlist?.audios) {
+                await removeAudiosFromPlaylist(
+                    playlistId,
+                    ids
+                );
+            } else {
+                await removeVideosFromPlaylist(
+                    playlistId,
+                    ids
+                );
+            }
+
+            setSelectedIds(new Set());
+            setSelectionMode(false);
+            setDeleteConfirmVisible(false);
+        } catch (error) {
+            console.error(error);
+        }
+    };
+    const visibleSessions = useMemo(() => {
+        let sessions =
+            tab === 'audio'
+                ? audioSessions
+                : tab === 'video'
+                    ? videoSessions
+                    : mappedSessions;
+
+        if (audioFilter === 'all') {
+            return sessions;
         }
 
-        setSelectedIds(new Set());
-        setSelectionMode(false);
-        setDeleteConfirmVisible(false);
-    } catch (error) {
-        console.error(error);
-    }
-};
- const visibleSessions = useMemo(() => {
-    let sessions =
-        tab === 'audio'
-            ? audioSessions
-            : tab === 'video'
-            ? videoSessions
-            : mappedSessions;
-
-    if (audioFilter === 'all') {
-        return sessions;
-    }
-
-    return sessions.filter(
-        (item) =>
-            !item.isVideo &&
-            item.contentTypeOfAudio === audioFilter
-    );
-}, [
-    tab,
-    audioSessions,
-    videoSessions,
-    mappedSessions,
-    audioFilter,
-]);
+        return sessions.filter(
+            (item) =>
+                !item.isVideo &&
+                item.contentTypeOfAudio === audioFilter
+        );
+    }, [
+        tab,
+        audioSessions,
+        videoSessions,
+        mappedSessions,
+        audioFilter,
+    ]);
 
     const handleDeletePlaylist = () => {
         Alert.alert(
@@ -249,7 +252,7 @@ const [filterMenuVisible, setFilterMenuVisible] = useState(false);
     const videoCount = videoSessions.length;
     const totalCount = mappedSessions.length;
 
- 
+
 
     return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -297,79 +300,86 @@ const [filterMenuVisible, setFilterMenuVisible] = useState(false);
                         >
                             <Ionicons name="checkmark-circle-outline" size={18} color={colors.text} />
                             <Text style={[styles.menuItemText, { color: colors.text }]}>Select</Text>
-                            <TouchableOpacity
-    style={styles.menuItem}
-    onPress={() => {
-        setMenuVisible(false);
-        setFilterMenuVisible(true);
-    }}
->
-    <Ionicons
-        name="filter-outline"
-        size={18}
-        color={colors.text}
-    />
-    <Text
-        style={[
-            styles.menuItemText,
-            { color: colors.text },
-        ]}
-    >
-        Filter
-    </Text>
-</TouchableOpacity>
+                        </TouchableOpacity>
+
+                        <View style={[styles.menuDivider, { backgroundColor: colors.dividerDark }]} />
+
+                        <TouchableOpacity
+                            style={styles.menuItem}
+                            activeOpacity={0.7}
+                            onPress={() => {
+                                setMenuVisible(false);
+                                setFilterMenuVisible(true);
+                            }}
+                        >
+                            <Ionicons name="filter-outline" size={18} color={colors.text} />
+                            <Text style={[styles.menuItemText, { color: colors.text }]}>Filter</Text>
+                        </TouchableOpacity>
+
+                        <View style={[styles.menuDivider, { backgroundColor: colors.dividerDark }]} />
+
+                        <TouchableOpacity
+                            style={styles.menuItem}
+                            activeOpacity={0.7}
+                            onPress={() => {
+                                setMenuVisible(false);
+                                setCreateModalVisible(true);
+                            }}
+                        >
+                            <Ionicons name="add-circle-outline" size={18} color={colors.text} />
+                            <Text style={[styles.menuItemText, { color: colors.text }]}>Create Playlist</Text>
                         </TouchableOpacity>
                     </View>
                 </>
             )}
-{filterMenuVisible && (
-    <>
-        <TouchableOpacity
-            style={styles.menuBackdrop}
-            activeOpacity={1}
-            onPress={() => setFilterMenuVisible(false)}
-        />
+            {filterMenuVisible && (
+                <>
+                    <TouchableOpacity
+                        style={styles.menuBackdrop}
+                        activeOpacity={1}
+                        onPress={() => setFilterMenuVisible(false)}
+                    />
 
-        <View
-            style={[
-                styles.menuCard,
-                {
-                    backgroundColor: colors.card,
-                    borderColor: colors.dividerDark,
-                },
-            ]}
-        >
-            {['all', 'mudra', 'nidra'].map((item) => (
-                <TouchableOpacity
-                    key={item}
-                    style={styles.menuItem}
-                    onPress={() => {
-                        setAudioFilter(item as 'all' | 'mudra' | 'nidra');
-                        setFilterMenuVisible(false);
-                    }}
-                >
-                    <Text
+                    <View
                         style={[
-                            styles.menuItemText,
+                            styles.menuCard,
                             {
-                                color:
-                                    audioFilter === item
-                                        ? colors.primary
-                                        : colors.text,
-                                fontWeight:
-                                    audioFilter === item
-                                        ? '700'
-                                        : '500',
+                                backgroundColor: colors.card,
+                                borderColor: colors.dividerDark,
                             },
                         ]}
                     >
-                        {item.charAt(0).toUpperCase() + item.slice(1)}
-                    </Text>
-                </TouchableOpacity>
-            ))}
-        </View>
-    </>
-)}
+                        {['all', 'mudra', 'nidra'].map((item) => (
+                            <TouchableOpacity
+                                key={item}
+                                style={styles.menuItem}
+                                onPress={() => {
+                                    setAudioFilter(item as 'all' | 'mudra' | 'nidra');
+                                    setFilterMenuVisible(false);
+                                }}
+                            >
+                                <Text
+                                    style={[
+                                        styles.menuItemText,
+                                        {
+                                            color:
+                                                audioFilter === item
+                                                    ? colors.primary
+                                                    : colors.text,
+                                            fontWeight:
+                                                audioFilter === item
+                                                    ? '700'
+                                                    : '500',
+                                        },
+                                    ]}
+                                >
+                                    {item.charAt(0).toUpperCase() + item.slice(1)}
+                                </Text>
+                            </TouchableOpacity>
+                        ))}
+                    </View>
+                </>
+            )}
             {/* Title block */}
             <View style={styles.titleBlock}>
                 <View style={[styles.iconCircle, { backgroundColor: colors.primaryLight }]}>
@@ -388,7 +398,7 @@ const [filterMenuVisible, setFilterMenuVisible] = useState(false);
                 </Text>
             </View>
 
-      
+
 
             {/* Select All / Delete bar — only in selection mode */}
             {selectionMode && totalCount > 0 && (
@@ -465,33 +475,33 @@ const [filterMenuVisible, setFilterMenuVisible] = useState(false);
                         const iconBg = session.isVideo
                             ? colors.surfaceAlt
                             : isMudra
-                            ? '#E8F5E9' 
-                            : '#E3F2FD'; 
+                                ? '#E8F5E9'
+                                : '#E3F2FD';
 
                         const iconColor = session.isVideo
                             ? colors.textSub
                             : isMudra
-                            ? '#2E7D32' 
-                            : '#1565C0'; 
+                                ? '#2E7D32'
+                                : '#1565C0';
                         return (
                             <TouchableOpacity
                                 key={session.id}
                                 activeOpacity={0.7}
                                 onPress={() => {
-                            if (selectionMode) {
-                                toggleSelectItem(session.id);
-                                return;
-                            }
+                                    if (selectionMode) {
+                                        toggleSelectItem(session.id);
+                                        return;
+                                    }
 
-                            router.push({
-                                pathname: '/mudrasessionplayer',
-                                params: {
-                                    playlistId,
-                                    mediaId: session.id,
-                                    isPlaylist: 'true',
-                                },
-                            });
-                        }}
+                                    router.push({
+                                        pathname: '/mudrasessionplayer',
+                                        params: {
+                                            playlistId,
+                                            mediaId: session.id,
+                                            isPlaylist: 'true',
+                                        },
+                                    });
+                                }}
                                 style={[
                                     styles.row,
                                     index !== visibleSessions.length - 1 && {
@@ -513,20 +523,20 @@ const [filterMenuVisible, setFilterMenuVisible] = useState(false);
                                     </View>
                                 )}
 
-                             <View
-                                style={[
-                                    styles.rowIconBox,
-                                    {
-                                        backgroundColor: iconBg,
-                                    },
-                                ]}
-                            >
-                                <Ionicons
-                                    name={session.isVideo ? 'videocam' : 'musical-note'}
-                                    size={17}
-                                    color={iconColor}
-                                />
-                            </View>
+                                <View
+                                    style={[
+                                        styles.rowIconBox,
+                                        {
+                                            backgroundColor: iconBg,
+                                        },
+                                    ]}
+                                >
+                                    <Ionicons
+                                        name={session.isVideo ? 'videocam' : 'musical-note'}
+                                        size={17}
+                                        color={iconColor}
+                                    />
+                                </View>
 
                                 <View style={styles.rowMeta}>
                                     <Text style={[styles.rowTitle, { color: colors.text }]} numberOfLines={1}>
@@ -557,6 +567,14 @@ const [filterMenuVisible, setFilterMenuVisible] = useState(false);
                 type="deleteSessions"
                 onConfirm={handleConfirmDeleteSelected}
                 onCancel={() => setDeleteConfirmVisible(false)}
+            />
+            <CreatePlaylistModal
+                visible={createModalVisible}
+                onClose={() => setCreateModalVisible(false)}
+                onCreate={(name) => {
+                    createPlaylist(name);
+                    setCreateModalVisible(false);
+                }}
             />
 
             <StandaloneTabBar />
@@ -599,7 +617,7 @@ const styles = StyleSheet.create({
     },
     menuCard: {
         position: 'absolute',
-        top: moderateScale(58),
+        top: moderateScale(88),
         right: moderateScale(16),
         borderRadius: moderateScale(14),
         borderWidth: 0.5,
@@ -779,5 +797,9 @@ const styles = StyleSheet.create({
     notFoundText: {
         fontFamily: 'SF-Pro-Display',
         fontSize: moderateScale(14),
+    },
+    menuDivider: {
+        height: 0.38,
+        marginHorizontal: moderateScale(4),
     },
 });
