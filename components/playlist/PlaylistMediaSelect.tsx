@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import {
     View,
     Text,
@@ -18,19 +18,16 @@ const moderateScale = (size: number, factor = 0.5) =>
     size + ((SCREEN_WIDTH - 375) / 375) * size * factor;
 
 interface FlatMediaItem extends PlaylistSession {
-    groupLabel?: string; // e.g. parent playlist name, shown as a small badge
+    groupLabel?: string;
 }
 
 interface PlaylistMediaSelectProps {
     playlistId: string;
-    rawItem: any; // full mudra or nidra object (not the normalized session)
+    rawItem: any;
     category: 'mudra' | 'nidra';
     onBack: () => void;
 }
 
-// Best-effort field reading — Strapi content types on this project vary
-// slightly in field casing (title/Title/name/Name), so each helper checks
-// the common variants rather than assuming one exact shape.
 const readTitle = (obj: any, fallback: string) =>
     obj?.title ?? obj?.Title ?? obj?.name ?? obj?.Name ?? fallback;
 
@@ -57,53 +54,92 @@ export default function PlaylistMediaSelect({
 }: PlaylistMediaSelectProps) {
     const { colors } = useTheme();
 
+    // Subscribing to the reactive `playlists` array itself — needed both so
+    // the +/- toggle re-renders instantly, and so we can look up which
+    // audio/video type THIS playlist was created as.
+    const playlists = usePlaylistStore((s) => s.playlists);
     const isSessionInPlaylist = usePlaylistStore((s) => s.isSessionInPlaylist);
     const addSessionToPlaylist = usePlaylistStore((s) => s.addSessionToPlaylist);
     const removeSessionFromPlaylist = usePlaylistStore((s) => s.removeSessionFromPlaylist);
-     usePlaylistStore((s) => s.playlists);
 
-    // ── Flatten this mudra/nidra's audio + video content into sections ──
+    const targetPlaylist = useMemo(
+        () => playlists.find((p) => p.id === playlistId),
+        [playlists, playlistId]
+    );
+
+    const [addedIds, setAddedIds] = useState<Set<string>>(
+        () => new Set(targetPlaylist?.sessions.map((s) => s.id) ?? [])
+    );
+
+    // Keep local state in sync if the underlying playlist changes from elsewhere
+    useEffect(() => {
+        setAddedIds(new Set(targetPlaylist?.sessions.map((s) => s.id) ?? []));
+    }, [targetPlaylist]);
+
+    console.log('playlistId received:', playlistId, 'targetPlaylist found:', targetPlaylist, 'all local playlists:', playlists);
+    
+    const playlistType: 'audio' | 'video' = targetPlaylist?.type ?? 'audio';
+
+    // ── Flatten this mudra/nidra's content, filtered to match the playlist's type ──
     const sections = useMemo(() => {
         if (category === 'nidra') {
-            // Nidra items in this app are single playable sessions rather
-            // than containers of multiple audio/video variants — so the
-            // nidra itself is the one addable item here.
+            const isNidraVideo =
+                rawItem.MediaType === 'VIDEO_SINGLE' || rawItem.MediaType === 'VIDEO_PLAYLIST';
+
+            // Only show this nidra as addable if its media type matches
+            // the target playlist's type (audio playlist ↔ audio nidra, etc).
+            if ((playlistType === 'video') !== isNidraVideo) {
+                return [];
+            }
+
             const single: FlatMediaItem = {
                 id: String(rawItem.documentId ?? rawItem.id),
                 title: readTitle(rawItem, 'Untitled nidra'),
                 duration: rawItem.Duration ? `${rawItem.Duration} min` : '',
-                isVideo: rawItem.MediaType === 'VIDEO_SINGLE' || rawItem.MediaType === 'VIDEO_PLAYLIST',
+                isVideo: isNidraVideo,
                 thumbnail: rawItem.NidraIntroCard?.ThumbnailImage?.[0]?.url ?? null,
                 contentTypeOfAudio: 'nidra',
             };
             return [{ label: 'Session', data: [single] }];
         }
 
-        // mudra: real API shape confirmed as
-        // audioSingleSessions[], audio_playlists[].audios[],
-        // videoSingleSessions[], video_playlists[].videos[]
-        const audioSingles: FlatMediaItem[] = (rawItem.audioSingleSessions ?? []).map((a: any) => ({
-            id: String(a.documentId ?? a.id),
-            title: readTitle(a, 'Untitled audio'),
-            duration: readDurationLabel(a),
-            isVideo: false,
-            thumbnail: readThumbnail(a),
-            contentTypeOfAudio: 'mudra',
-        }));
-
-        const audioFromPlaylists: FlatMediaItem[] = (rawItem.audio_playlists ?? []).flatMap((pl: any) =>
-            (pl.audios ?? []).map((a: any) => ({
+        // mudra: only build the sections matching the playlist's type
+        if (playlistType === 'audio') {
+            const audioSingles: FlatMediaItem[] = (
+                Array.isArray(rawItem.audioSingleSessions) ? rawItem.audioSingleSessions : []
+            ).map((a: any) => ({
                 id: String(a.documentId ?? a.id),
                 title: readTitle(a, 'Untitled audio'),
                 duration: readDurationLabel(a),
                 isVideo: false,
                 thumbnail: readThumbnail(a),
                 contentTypeOfAudio: 'mudra',
-                groupLabel: readTitle(pl, 'Playlist'),
-            }))
-        );
+            }));
 
-        const videoSingles: FlatMediaItem[] = (rawItem.videoSingleSessions ?? []).map((v: any) => ({
+            const audioFromPlaylists: FlatMediaItem[] = (
+                Array.isArray(rawItem.audio_playlists) ? rawItem.audio_playlists : []
+            ).flatMap((pl: any) =>
+                (Array.isArray(pl.audios) ? pl.audios : []).map((a: any) => ({
+                    id: String(a.documentId ?? a.id),
+                    title: readTitle(a, 'Untitled audio'),
+                    duration: readDurationLabel(a),
+                    isVideo: false,
+                    thumbnail: readThumbnail(a),
+                    contentTypeOfAudio: 'mudra',
+                    groupLabel: readTitle(pl, 'Playlist'),
+                }))
+            );
+
+            const result = [];
+            if (audioSingles.length) result.push({ label: 'Audio Sessions', data: audioSingles });
+            if (audioFromPlaylists.length) result.push({ label: 'Audio Playlists', data: audioFromPlaylists });
+            return result;
+        }
+
+        // playlistType === 'video'
+        const videoSingles: FlatMediaItem[] = (
+            Array.isArray(rawItem.videoSingleSessions) ? rawItem.videoSingleSessions : []
+        ).map((v: any) => ({
             id: String(v.documentId ?? v.id),
             title: readTitle(v, 'Untitled video'),
             duration: readDurationLabel(v),
@@ -112,8 +148,10 @@ export default function PlaylistMediaSelect({
             contentTypeOfAudio: 'mudra',
         }));
 
-        const videoFromPlaylists: FlatMediaItem[] = (rawItem.video_playlists ?? []).flatMap((pl: any) =>
-            (pl.videos ?? []).map((v: any) => ({
+        const videoFromPlaylists: FlatMediaItem[] = (
+            Array.isArray(rawItem.video_playlists) ? rawItem.video_playlists : []
+        ).flatMap((pl: any) =>
+            (Array.isArray(pl.videos) ? pl.videos : []).map((v: any) => ({
                 id: String(v.documentId ?? v.id),
                 title: readTitle(v, 'Untitled video'),
                 duration: readDurationLabel(v),
@@ -125,22 +163,29 @@ export default function PlaylistMediaSelect({
         );
 
         const result = [];
-        if (audioSingles.length) result.push({ label: 'Audio Sessions', data: audioSingles });
-        if (audioFromPlaylists.length) result.push({ label: 'Audio Playlists', data: audioFromPlaylists });
         if (videoSingles.length) result.push({ label: 'Video Sessions', data: videoSingles });
         if (videoFromPlaylists.length) result.push({ label: 'Video Playlists', data: videoFromPlaylists });
         return result;
-    }, [category, rawItem]);
+    }, [category, rawItem, playlistType]);
 
     const totalCount = sections.reduce((sum, s) => sum + s.data.length, 0);
+    const selectedCount = sections.reduce(
+        (sum, s) => sum + s.data.filter((item) => addedIds.has(item.id)).length,
+        0
+    );
 
     const handleToggle = (session: FlatMediaItem) => {
-        const inPlaylist = isSessionInPlaylist(playlistId, session.id);
-        if (inPlaylist) {
-            removeSessionFromPlaylist(playlistId, session.id);
-        } else {
-            addSessionToPlaylist(playlistId, session);
-        }
+        setAddedIds((prev) => {
+            const next = new Set(prev);
+            if (next.has(session.id)) {
+                next.delete(session.id);
+                removeSessionFromPlaylist(playlistId, session.id);
+            } else {
+                next.add(session.id);
+                addSessionToPlaylist(playlistId, session);
+            }
+            return next;
+        });
     };
 
     const resolveThumbnailUri = (thumbnail?: string | null) => {
@@ -159,83 +204,102 @@ export default function PlaylistMediaSelect({
             </Text>
             <Text style={[styles.pageSubtitle, { color: colors.textSub }]}>
                 {totalCount === 0
-                    ? 'No audio or video content found'
-                    : `${totalCount} item${totalCount > 1 ? 's' : ''} available`}
+                    ? `No ${playlistType} content found`
+                    : `${totalCount} ${playlistType} item${totalCount > 1 ? 's' : ''} available`}
             </Text>
 
             {totalCount === 0 ? (
                 <View style={styles.emptyWrap}>
                     <Ionicons name="alert-circle-outline" size={26} color={colors.textMuted as string} />
                     <Text style={[styles.emptySub, { color: colors.textSub }]}>
-                        This item doesn&apos;t have any linked audio or video content yet.
+                        This item doesn&apos;t have any linked {playlistType} content matching this playlist.
                     </Text>
                 </View>
             ) : (
-                <ScrollView contentContainerStyle={styles.listContent} showsVerticalScrollIndicator={false}>
-                    {sections.map((section) => (
-                        <View key={section.label} style={styles.section}>
-                            <Text style={[styles.sectionLabel, { color: colors.textMuted as string }]}>
-                                {section.label.toUpperCase()}
-                            </Text>
+                <>
+                    <ScrollView
+                        contentContainerStyle={styles.listContent}
+                        showsVerticalScrollIndicator={false}
+                    >
+                        {sections.map((section) => (
+                            <View key={section.label} style={styles.section}>
+                                <Text style={[styles.sectionLabel, { color: colors.textMuted as string }]}>
+                                    {section.label.toUpperCase()}
+                                </Text>
 
-                            {section.data.map((item, index) => {
-                                const added = isSessionInPlaylist(playlistId, item.id);
-                                const uri = resolveThumbnailUri(item.thumbnail);
+                                {section.data.map((item, index) => {
+                                    const added = addedIds.has(item.id);
+                                    const uri = resolveThumbnailUri(item.thumbnail);
 
-                                return (
-                                    <View
-                                        key={`${section.label}-${item.id}-${index}`}
-                                        style={[
-                                            styles.row,
-                                            index !== section.data.length - 1 && {
-                                                borderBottomWidth: 0.38,
-                                                borderBottomColor: colors.dashedLine,
-                                            },
-                                        ]}
-                                    >
-                                        <View style={[styles.thumbWrap, { backgroundColor: colors.surfaceAlt }]}>
-                                            {uri ? (
-                                                <Image source={{ uri }} style={styles.thumb} resizeMode="cover" />
-                                            ) : (
-                                                <Ionicons
-                                                    name={item.isVideo ? 'videocam' : 'musical-note'}
-                                                    size={17}
-                                                    color={colors.textMuted as string}
-                                                />
-                                            )}
-                                        </View>
-
-                                        <View style={styles.rowMeta}>
-                                            <Text style={[styles.rowTitle, { color: colors.text }]} numberOfLines={1}>
-                                                {item.title}
-                                            </Text>
-                                            <Text style={[styles.rowSub, { color: colors.textSub }]} numberOfLines={1}>
-                                                {item.duration ? `${item.duration}  ·  ` : ''}
-                                                {item.isVideo ? 'Video' : 'Audio'}
-                                                {item.groupLabel ? `  ·  ${item.groupLabel}` : ''}
-                                            </Text>
-                                        </View>
-
-                                        <TouchableOpacity
-                                            onPress={() => handleToggle(item)}
-                                            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                                    return (
+                                        <View
+                                            key={`${section.label}-${item.id}-${index}`}
                                             style={[
-                                                styles.toggleBtn,
-                                                { backgroundColor: added ? colors.primary : colors.primaryLight },
+                                                styles.row,
+                                                index !== section.data.length - 1 && {
+                                                    borderBottomWidth: 0.38,
+                                                    borderBottomColor: colors.dashedLine,
+                                                },
                                             ]}
                                         >
-                                            <Ionicons
-                                                name={added ? 'remove' : 'add'}
-                                                size={18}
-                                                color={added ? '#FFFFFF' : (colors.primary as string)}
-                                            />
-                                        </TouchableOpacity>
-                                    </View>
-                                );
-                            })}
-                        </View>
-                    ))}
-                </ScrollView>
+                                            <View style={[styles.thumbWrap, { backgroundColor: colors.surfaceAlt }]}>
+                                                {uri ? (
+                                                    <Image source={{ uri }} style={styles.thumb} resizeMode="cover" />
+                                                ) : (
+                                                    <Ionicons
+                                                        name={item.isVideo ? 'videocam' : 'musical-note'}
+                                                        size={17}
+                                                        color={colors.textMuted as string}
+                                                    />
+                                                )}
+                                            </View>
+
+                                            <View style={styles.rowMeta}>
+                                                <Text style={[styles.rowTitle, { color: colors.text }]} numberOfLines={1}>
+                                                    {item.title}
+                                                </Text>
+                                                <Text style={[styles.rowSub, { color: colors.textSub }]} numberOfLines={1}>
+                                                    {item.duration ? `${item.duration}  ·  ` : ''}
+                                                    {item.isVideo ? 'Video' : 'Audio'}
+                                                    {item.groupLabel ? `  ·  ${item.groupLabel}` : ''}
+                                                </Text>
+                                            </View>
+
+                                            <TouchableOpacity
+                                                key={`${item.id}-${added}`}
+                                                onPress={() => handleToggle(item)}
+                                                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                                                style={[
+                                                    styles.toggleBtn,
+                                                    { backgroundColor: added ? colors.primary : colors.primaryLight },
+                                                ]}
+                                            >
+                                                <Ionicons
+                                                    name={added ? 'remove' : 'add'}
+                                                    size={18}
+                                                    color={added ? '#FFFFFF' : (colors.primary as string)}
+                                                />
+                                            </TouchableOpacity>
+                                        </View>
+                                    );
+                                })}
+                            </View>
+                        ))}
+                    </ScrollView>
+
+                    <View style={[styles.doneBar, { backgroundColor: colors.background, borderTopColor: colors.dashedLine }]}>
+                        <Text style={[styles.doneBarCount, { color: colors.textSub }]}>
+                            {selectedCount} selected
+                        </Text>
+                        <TouchableOpacity
+                            activeOpacity={0.85}
+                            onPress={onBack}
+                            style={[styles.doneBtn, { backgroundColor: colors.primary }]}
+                        >
+                            <Text style={styles.doneBtnText}>Done</Text>
+                        </TouchableOpacity>
+                    </View>
+                </>
             )}
         </View>
     );
@@ -263,7 +327,7 @@ const styles = StyleSheet.create({
     },
     listContent: {
         paddingHorizontal: moderateScale(16),
-        paddingBottom: moderateScale(100),
+        paddingBottom: moderateScale(24),
     },
     section: {
         marginBottom: moderateScale(18),
@@ -328,5 +392,30 @@ const styles = StyleSheet.create({
         fontSize: moderateScale(13),
         textAlign: 'center',
         lineHeight: moderateScale(19),
+    },
+    doneBar: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingHorizontal: moderateScale(20),
+        paddingTop: moderateScale(12),
+        paddingBottom: moderateScale(20),
+        borderTopWidth: 0.5,
+    },
+    doneBarCount: {
+        fontFamily: 'SF-Pro-Display',
+        fontSize: moderateScale(13),
+        fontWeight: '500',
+    },
+    doneBtn: {
+        borderRadius: moderateScale(14),
+        paddingHorizontal: moderateScale(28),
+        paddingVertical: moderateScale(11),
+    },
+    doneBtnText: {
+        fontFamily: 'SF-Pro-Display',
+        fontWeight: '600',
+        fontSize: moderateScale(14),
+        color: '#FFFFFF',
     },
 });

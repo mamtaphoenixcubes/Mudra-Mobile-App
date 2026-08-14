@@ -572,7 +572,7 @@ export default function PlaylistDetailScreen() {
                 visible={createModalVisible}
                 onClose={() => setCreateModalVisible(false)}
                 onCreate={(name) => {
-                    createPlaylist(name);
+                    createPlaylist(name, playlist?.audios ? 'audio' : 'video');
                     setCreateModalVisible(false);
                 }}
             />

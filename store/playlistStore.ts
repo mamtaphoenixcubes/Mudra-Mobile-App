@@ -16,6 +16,7 @@ export interface Playlist {
     id: string;
     name: string;
     description?: string;
+    type: 'audio' | 'video';
     sessions: PlaylistSession[];
     createdAt: number;
 }
@@ -29,7 +30,7 @@ export interface RemotePlaylistAudio {
     thumbnail?: {
         url?: string | null;
     } | null;
-    
+
 }
 
 export interface RemotePlaylistVideo {
@@ -58,7 +59,7 @@ interface PlaylistStore {
     // Local playlists
     playlists: Playlist[];
 
-    createPlaylist: (name: string, description?: string) => Playlist;
+    createPlaylist: (name: string, type: 'audio' | 'video', description?: string) => Playlist;
     deletePlaylist: (playlistId: string) => void;
     renamePlaylist: (
         playlistId: string,
@@ -87,7 +88,7 @@ interface PlaylistStore {
 
     // Remote playlists
     audioPlaylists: RemotePlaylist[];
-videoPlaylists: RemotePlaylist[];
+    videoPlaylists: RemotePlaylist[];
     isLoadingPlaylists: boolean;
 
     fetchUserPlaylists: (
@@ -105,9 +106,9 @@ videoPlaylists: RemotePlaylist[];
         token?: string
     ) => Promise<void>;
     deleteVideoPlaylist: (
-    documentId: string,
-    token?: string
-) => Promise<void>;
+        documentId: string,
+        token?: string
+    ) => Promise<void>;
 
     addVideoToPlaylist: (
         playlistId: string,
@@ -115,15 +116,15 @@ videoPlaylists: RemotePlaylist[];
         token?: string
     ) => Promise<void>;
     removeAudiosFromPlaylist: (
-    playlistId: string,
-    audioDocumentIds: string[],
-    token?: string
-) => Promise<void>;
-removeVideosFromPlaylist: (
-    playlistId: string,
-    videoDocumentIds: string[],
-    token?: string
-) => Promise<void>;
+        playlistId: string,
+        audioDocumentIds: string[],
+        token?: string
+    ) => Promise<void>;
+    removeVideosFromPlaylist: (
+        playlistId: string,
+        videoDocumentIds: string[],
+        token?: string
+    ) => Promise<void>;
 }
 
 const generateId = () =>
@@ -137,11 +138,12 @@ export const usePlaylistStore = create<PlaylistStore>()(
             // -----------------------------------------------------------------
             playlists: [],
 
-            createPlaylist: (name, description) => {
+            createPlaylist: (name, type, description) => {
                 const newPlaylist: Playlist = {
                     id: generateId(),
                     name: name.trim() || 'My playlist',
                     description: description?.trim() || '',
+                    type,
                     sessions: [],
                     createdAt: Date.now(),
                 };
@@ -253,7 +255,7 @@ export const usePlaylistStore = create<PlaylistStore>()(
             // Remote playlists
             // -----------------------------------------------------------------
             audioPlaylists: [],
-videoPlaylists: [],
+            videoPlaylists: [],
             isLoadingPlaylists: false,
 
             fetchUserPlaylists: async (
@@ -330,7 +332,7 @@ videoPlaylists: [],
                         result?.data;
 
                     set({
-                         videoPlaylists: Array.isArray(payload) ? payload : [],
+                        videoPlaylists: Array.isArray(payload) ? payload : [],
                     });
                 } catch (error: any) {
                     console.log(
@@ -347,84 +349,84 @@ videoPlaylists: [],
                     });
                 }
             },
-    deleteRemotePlaylist: async (
-    documentId,
-    token
-) => {
-    const previous = get().audioPlaylists;
+            deleteRemotePlaylist: async (
+                documentId,
+                token
+            ) => {
+                const previous = get().audioPlaylists;
 
-    // Optimistically remove from UI
-    set({
-        audioPlaylists: previous.filter(
-            (playlist) =>
-                String(playlist.documentId ?? playlist.id) !==
-                String(documentId)
-        ),
-    });
+                // Optimistically remove from UI
+                set({
+                    audioPlaylists: previous.filter(
+                        (playlist) =>
+                            String(playlist.documentId ?? playlist.id) !==
+                            String(documentId)
+                    ),
+                });
 
-    try {
-        await axios.delete(
-            `${process.env.EXPO_PUBLIC_API_URL}/audio-playlists/delete/${documentId}`,
-            {
-                headers: token
-                    ? {
-                          Authorization: `Bearer ${token}`,
-                      }
-                    : undefined,
-            }
-        );
-    } catch (error: any) {
-        console.log(
-            'DELETE_AUDIO_PLAYLIST_ERROR',
-            error?.response?.data || error
-        );
+                try {
+                    await axios.delete(
+                        `${process.env.EXPO_PUBLIC_API_URL}/audio-playlists/delete/${documentId}`,
+                        {
+                            headers: token
+                                ? {
+                                    Authorization: `Bearer ${token}`,
+                                }
+                                : undefined,
+                        }
+                    );
+                } catch (error: any) {
+                    console.log(
+                        'DELETE_AUDIO_PLAYLIST_ERROR',
+                        error?.response?.data || error
+                    );
 
-        // Restore previous state if API fails
-        set({
-            audioPlaylists: previous,
-        });
+                    // Restore previous state if API fails
+                    set({
+                        audioPlaylists: previous,
+                    });
 
-        throw error;
-    }
-},
-deleteVideoPlaylist: async (
-    documentId,
-    token
-) => {
-    const previous = get().videoPlaylists;
+                    throw error;
+                }
+            },
+            deleteVideoPlaylist: async (
+                documentId,
+                token
+            ) => {
+                const previous = get().videoPlaylists;
 
-    set({
-        videoPlaylists: previous.filter(
-            (playlist) =>
-                String(playlist.documentId ?? playlist.id) !==
-                String(documentId)
-        ),
-    });
+                set({
+                    videoPlaylists: previous.filter(
+                        (playlist) =>
+                            String(playlist.documentId ?? playlist.id) !==
+                            String(documentId)
+                    ),
+                });
 
-    try {
-        await axios.delete(
-            `${process.env.EXPO_PUBLIC_API_URL}/video-playlists/delete/${documentId}`,
-            {
-                headers: token
-                    ? {
-                          Authorization: `Bearer ${token}`,
-                      }
-                    : undefined,
-            }
-        );
-    } catch (error: any) {
-        console.log(
-            'DELETE_VIDEO_PLAYLIST_ERROR',
-            error?.response?.data || error
-        );
+                try {
+                    await axios.delete(
+                        `${process.env.EXPO_PUBLIC_API_URL}/video-playlists/delete/${documentId}`,
+                        {
+                            headers: token
+                                ? {
+                                    Authorization: `Bearer ${token}`,
+                                }
+                                : undefined,
+                        }
+                    );
+                } catch (error: any) {
+                    console.log(
+                        'DELETE_VIDEO_PLAYLIST_ERROR',
+                        error?.response?.data || error
+                    );
 
-        set({
-            videoPlaylists: previous,
-        });
+                    set({
+                        videoPlaylists: previous,
+                    });
 
-        throw error;
-    }
-},
+                    throw error;
+                }
+            },
 
             addVideoToPlaylist: async (
                 playlistId,
@@ -454,103 +456,103 @@ deleteVideoPlaylist: async (
                 }
             },
             removeAudiosFromPlaylist: async (
-    playlistId,
-    audioDocumentIds,
-    token
-) => {
-    try {
-        await axios.put(
-            `${process.env.EXPO_PUBLIC_API_URL}/audio-playlists/${playlistId}/remove-audios`,
-            {
+                playlistId,
                 audioDocumentIds,
-            },
-            {
-                headers: token
-                    ? {
-                          Authorization: `Bearer ${token}`,
-                      }
-                    : undefined,
-            }
-        );
+                token
+            ) => {
+                try {
+                    await axios.put(
+                        `${process.env.EXPO_PUBLIC_API_URL}/audio-playlists/${playlistId}/remove-audios`,
+                        {
+                            audioDocumentIds,
+                        },
+                        {
+                            headers: token
+                                ? {
+                                    Authorization: `Bearer ${token}`,
+                                }
+                                : undefined,
+                        }
+                    );
 
-        set((state) => ({
-            audioPlaylists: state.audioPlaylists.map((playlist) => {
-                if (
-                    String(playlist.documentId ?? playlist.id) !==
-                    String(playlistId)
-                ) {
-                    return playlist;
+                    set((state) => ({
+                        audioPlaylists: state.audioPlaylists.map((playlist) => {
+                            if (
+                                String(playlist.documentId ?? playlist.id) !==
+                                String(playlistId)
+                            ) {
+                                return playlist;
+                            }
+
+                            return {
+                                ...playlist,
+                                audios:
+                                    playlist.audios?.filter(
+                                        (audio) =>
+                                            !audioDocumentIds.includes(
+                                                String(audio.documentId ?? audio.id)
+                                            )
+                                    ) ?? [],
+                            };
+                        }),
+                    }));
+                } catch (error: any) {
+                    console.log(
+                        'REMOVE_AUDIOS_FROM_PLAYLIST_ERROR',
+                        error?.response?.data || error
+                    );
+                    throw error;
                 }
-
-                return {
-                    ...playlist,
-                    audios:
-                        playlist.audios?.filter(
-                            (audio) =>
-                                !audioDocumentIds.includes(
-                                    String(audio.documentId ?? audio.id)
-                                )
-                        ) ?? [],
-                };
-            }),
-        }));
-    } catch (error: any) {
-        console.log(
-            'REMOVE_AUDIOS_FROM_PLAYLIST_ERROR',
-            error?.response?.data || error
-        );
-        throw error;
-    }
-},
-removeVideosFromPlaylist: async (
-    playlistId,
-    videoDocumentIds,
-    token
-) => {
-    try {
-        await axios.put(
-            `${process.env.EXPO_PUBLIC_API_URL}/video-playlists/${playlistId}/remove-videos`,
-            {
+            },
+            removeVideosFromPlaylist: async (
+                playlistId,
                 videoDocumentIds,
-            },
-            {
-                headers: token
-                    ? {
-                          Authorization: `Bearer ${token}`,
-                      }
-                    : undefined,
-            }
-        );
+                token
+            ) => {
+                try {
+                    await axios.put(
+                        `${process.env.EXPO_PUBLIC_API_URL}/video-playlists/${playlistId}/remove-videos`,
+                        {
+                            videoDocumentIds,
+                        },
+                        {
+                            headers: token
+                                ? {
+                                    Authorization: `Bearer ${token}`,
+                                }
+                                : undefined,
+                        }
+                    );
 
-        set((state) => ({
-            videoPlaylists: state.videoPlaylists.map((playlist) => {
-                if (
-                    String(playlist.documentId ?? playlist.id) !==
-                    String(playlistId)
-                ) {
-                    return playlist;
+                    set((state) => ({
+                        videoPlaylists: state.videoPlaylists.map((playlist) => {
+                            if (
+                                String(playlist.documentId ?? playlist.id) !==
+                                String(playlistId)
+                            ) {
+                                return playlist;
+                            }
+
+                            return {
+                                ...playlist,
+                                videos:
+                                    playlist.videos?.filter(
+                                        (video) =>
+                                            !videoDocumentIds.includes(
+                                                String(video.documentId ?? video.id)
+                                            )
+                                    ) ?? [],
+                            };
+                        }),
+                    }));
+                } catch (error: any) {
+                    console.log(
+                        'REMOVE_VIDEOS_FROM_PLAYLIST_ERROR',
+                        error?.response?.data || error
+                    );
+                    throw error;
                 }
-
-                return {
-                    ...playlist,
-                    videos:
-                        playlist.videos?.filter(
-                            (video) =>
-                                !videoDocumentIds.includes(
-                                    String(video.documentId ?? video.id)
-                                )
-                        ) ?? [],
-                };
-            }),
-        }));
-    } catch (error: any) {
-        console.log(
-            'REMOVE_VIDEOS_FROM_PLAYLIST_ERROR',
-            error?.response?.data || error
-        );
-        throw error;
-    }
-},
+            },
         }),
         {
             name: '@mudras_playlists',

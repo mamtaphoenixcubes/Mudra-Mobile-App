@@ -102,15 +102,9 @@ export default function MyPlaylistsScreen() {
             ? audioPlaylists
             : videoPlaylists;
 
-    // const handleCreate = () => {
-    //     if (!newName.trim()) return;
-    //     createPlaylist(newName);
-    //     setNewName('');
-    //     setCreateVisible(false);
-    // };
     const handleCreate = async () => {
         if (!newName.trim()) return;
-        const created = createPlaylist(newName); // local createPlaylist is synchronous, not async — returns Playlist directly
+        const created = createPlaylist(newName, selectedTab); // local createPlaylist is synchronous, not async — returns Playlist directly
         setNewName('');
         setCreateVisible(false);
 
