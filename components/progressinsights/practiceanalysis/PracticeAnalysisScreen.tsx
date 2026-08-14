@@ -664,10 +664,79 @@ export default function PracticeAnalysisScreen() {
                     </View>
                     <View style={[styles.consistencyTile, { backgroundColor: '#FFDBE7' }]}>
                         <Ionicons name="flag-outline" size={18} color="#4B1528" />
-                        <Text style={[styles.consistencyValue, { color: '#4B1528' }]}>
-                            {goal?.hasGoal ? `${goal.current ?? 0}/${goal.target ?? 0}` : 'Not set'}
-                        </Text>
-                        <Text style={[styles.consistencyLabel, { color: '#4B1528' }]}>{goalLabel}</Text>
+                        {/* Show session count and duration according to which goals are set.
+                            - If sessionCount.hasGoal: show current/target sessions
+                            - Else: show current sessions
+                            - If duration.hasGoal: show current (seconds) converted to minutes (and target if available)
+                            - Else: show current duration in minutes
+                        */}
+                        {(() => {
+                            const sessionCount = goal?.sessionCount;
+                            const duration = goal?.duration;
+
+                            const sessionHasGoal = !!sessionCount?.hasGoal;
+                            const durationHasGoal = !!duration?.hasGoal;
+
+                            const sessionCurrent = sessionCount?.current ?? 0;
+                            const sessionTarget = sessionCount?.target ?? 0;
+
+                            const durationCurrentSec = duration?.current ?? 0;
+                            const durationTargetSec = duration?.target ?? 0;
+                            const durationCurrentMin = Math.round(durationCurrentSec / 60);
+                            const durationTargetMin = Math.round(durationTargetSec / 60);
+
+                            const sessionCompleted = !!sessionCount?.completed;
+                            const durationCompleted = !!duration?.completed;
+
+                            const periodLabel = range === 'week' ? 'week' : range === 'month' ? 'month' : 'day';
+
+                            // If exactly one goal is set, show that metric in a clear card with completed and target lines + ticks.
+                            if (sessionHasGoal && !durationHasGoal) {
+                                return (
+                                    <View style={{ alignItems: 'center' }}>
+                                        <Text style={[styles.consistencyValue, { color: '#4B1528', fontSize: 20 }]}>{sessionCurrent}</Text>
+                                        <Text style={[styles.consistencyLabel, { color: '#4B1528' }]}>session completed</Text>
+
+                                        <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 8 }}>
+                                            <Text style={[styles.consistencyLabel, { color: '#64748B' }]}>{sessionTarget} session {periodLabel} target</Text>
+                                            <View style={{ width: 8 }} />
+                                            {sessionCompleted ? (
+                                                <Ionicons name="checkmark-circle" size={18} color="#16A34A" />
+                                            ) : (
+                                                <Ionicons name="ellipse" size={14} color="#CBD5E1" />
+                                            )}
+                                        </View>
+                                    </View>
+                                );
+                            }
+
+                            if (durationHasGoal && !sessionHasGoal) {
+                                return (
+                                    <View style={{ alignItems: 'center' }}>
+                                        <Text style={[styles.consistencyValue, { color: '#4B1528', fontSize: 20 }]}>{durationCurrentMin}m</Text>
+                                        <Text style={[styles.consistencyLabel, { color: '#4B1528' }]}>duration completed</Text>
+
+                                        <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 8 }}>
+                                            <Text style={[styles.consistencyLabel, { color: '#64748B' }]}>{durationTargetMin}m {periodLabel} target</Text>
+                                            <View style={{ width: 8 }} />
+                                            {durationCompleted ? (
+                                                <Ionicons name="checkmark-circle" size={18} color="#16A34A" />
+                                            ) : (
+                                                <Ionicons name="ellipse" size={14} color="#CBD5E1" />
+                                            )}
+                                        </View>
+                                    </View>
+                                );
+                            }
+
+                            // Otherwise (both false or both true) show both metrics compactly.
+                            return (
+                                <View style={{ alignItems: 'center' }}>
+                                    <Text style={[styles.consistencyValue, { color: '#4B1528', fontSize: 16 }]}>{sessionCurrent} sessions</Text>
+                                    <Text style={[styles.consistencyLabel, { color: '#4B1528' }]}>{durationCurrentMin}m duration</Text>
+                                </View>
+                            );
+                        })()}
                     </View>
                 </View>
             </View>
