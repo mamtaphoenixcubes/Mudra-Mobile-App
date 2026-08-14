@@ -55,7 +55,6 @@ const selectedBgMusic = bgMusicOptions.find(
 );
     const profileDocumentId =
         user?.id || user?.profileDocumentId;
-    console.log(profileDocumentId, "profileDocumentIdprofileDocumentIdprofileDocumentId");
 
     const fetchMudraById = useMudraStore(
         (s) => s.fetchMudraById
@@ -68,7 +67,6 @@ const selectedBgMusic = bgMusicOptions.find(
     const mudra =
         selectedMudra?.data ??
         selectedMudra;
-    console.log(mudra, "mudraaaaaaaaaaaaa");
 
     const currentUserActivity = mudra?.userMudraActivities?.find(
         (activity: any) =>
@@ -314,7 +312,7 @@ const selectedBgMusic = bgMusicOptions.find(
 
 
 
-        <MudraTimerModal
+<MudraTimerModal
     visible={timerVisible}
     durationInMinutes={timerDuration}
     selectedDuration={selectedDuration}
@@ -325,6 +323,11 @@ const selectedBgMusic = bgMusicOptions.find(
     profileDocumentId={profileDocumentId}
     bgMusicUrl={selectedBgMusic?.fileUrl ?? null}
     onClose={() => setTimerVisible(false)}
+    onProgressSaved={async () => {
+        if (!id) return;
+
+        await fetchMudraById(id as string);
+    }}
 />
 
             <BackgroundMusicModal

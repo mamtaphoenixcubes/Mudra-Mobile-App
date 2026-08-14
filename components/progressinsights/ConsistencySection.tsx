@@ -32,17 +32,44 @@ export default function ConsistencySection({
 
     const calendar = overview?.calendar?.calendar ?? [];
 
-const weekCompletionMap = Array(7).fill(false);
+    // Parse dates as local (avoid timezone shift) and map only dates within the current week
+    const parseDate = (dateStr: string) => {
+        const parts = dateStr?.split('-').map(Number) ?? [];
+        if (parts.length !== 3) return new Date(dateStr);
+        const [y, m, d] = parts;
+        return new Date(y, m - 1, d);
+    };
 
-calendar.forEach((item) => {
-    const date = new Date(item.date);
+    // Use provided `today`; otherwise fall back to the latest date present in the calendar array,
+    // or to the current local date if nothing is available.
+    let todayStr = overview?.calendar?.today;
+    if (!todayStr) {
+        const dates = calendar.map((it) => it?.date).filter(Boolean) as string[];
+        if (dates.length) {
+            const latest = dates.reduce((a, b) => (parseDate(a) > parseDate(b) ? a : b));
+            todayStr = latest;
+        } else {
+            todayStr = new Date().toISOString().slice(0, 10);
+        }
+    }
+    const todayDate = parseDate(todayStr);
+    const todayDayIndex = (todayDate.getDay() + 6) % 7; // Monday=0 .. Sunday=6
+    const weekStart = new Date(todayDate);
+    weekStart.setDate(todayDate.getDate() - todayDayIndex);
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekStart.getDate() + 6);
 
-    // JS: Sunday=0 ... Saturday=6
-    // Convert to Monday=0 ... Sunday=6
-    const dayIndex = (date.getDay() + 6) % 7;
+    const weekCompletionMap = Array(7).fill(false);
 
-    weekCompletionMap[dayIndex] = item.completed;
-});
+    calendar.forEach((item) => {
+        if (!item?.date) return;
+        const itemDate = parseDate(item.date);
+        // consider only dates that fall in this week (Mon..Sun)
+        if (itemDate >= weekStart && itemDate <= weekEnd) {
+            const dayIndex = (itemDate.getDay() + 6) % 7;
+            weekCompletionMap[dayIndex] = item.completed;
+        }
+    });
 
 const currentStreak = overview?.currentStreak ?? 0;
 

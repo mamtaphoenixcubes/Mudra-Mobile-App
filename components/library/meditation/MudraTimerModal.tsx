@@ -27,6 +27,7 @@ interface MudraTimerModalProps {
     profileDocumentId: string;
     bgMusicUrl?: string | null;
     onClose: () => void;
+    onProgressSaved?: () => void | Promise<void>;
 }
 
 const RADIUS = 90;
@@ -43,6 +44,7 @@ const MudraTimerModal = ({
     profileDocumentId,
     bgMusicUrl,
     onClose,
+    onProgressSaved,
 }: MudraTimerModalProps) => {
     const { isDark } = useTheme();
     const router = useRouter();
@@ -167,17 +169,13 @@ const startBgm = async () => {
             lastSessionDuration &&
             selectedDuration * 60 === lastSessionDuration;
 
-        const totalSeconds = shouldResume
-            ? remainingDuration
-            : selectedDuration * 60;
-
+        const totalSeconds = shouldResume? remainingDuration: selectedDuration * 60;
         setTimeLeft(totalSeconds);
         setTotalTime(totalSeconds);
         setIsPaused(false);
         setHasStarted(false);
         setIsCompleted(false);
         hasCompletedRef.current = false;
-
         return () => {
             if (timerRef.current) clearInterval(timerRef.current);
             stopPulse();
@@ -193,6 +191,7 @@ const startBgm = async () => {
                 `${process.env.EXPO_PUBLIC_API_URL}/mudras/${mudraId}/progress`,
                 { profileDocumentId, remainingDuration: timeLeft, sessionDuration: selectedDuration * 60 }
             );
+             await onProgressSaved?.();
         } catch (error) {
             console.log('SAVE_PROGRESS_ERROR', error);
         }
