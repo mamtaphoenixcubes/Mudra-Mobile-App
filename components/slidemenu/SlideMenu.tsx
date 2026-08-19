@@ -42,7 +42,7 @@ export default function SlideMenu({ visible, onClose }: SlideMenuProps) {
 
     // Staggered item animations
     const itemAnims = useRef(
-        Array.from({ length: 12 }, () => new Animated.Value(0))
+        Array.from({ length: 15 }, () => new Animated.Value(0))
     ).current;
 
     const menuSections = {
@@ -52,6 +52,8 @@ export default function SlideMenu({ visible, onClose }: SlideMenuProps) {
             { id: 'reminders', title: 'Reminders', icon: 'notifications-outline', route: '/reminders' },
             { id: 'saved', title: 'Saved / Favourites', icon: 'heart-outline', route: '/saved' },
             { id: 'playlists', title: 'My Playlists', icon: 'list-outline', route: '/myplaylists' },
+            { id: 'asana', title: 'Asana', icon: 'body-outline', route: '/asana' },
+            { id: 'pranayama', title: 'Pranayama', icon: 'pulse-outline', route: '/pranayama' },
 
             //{ id: 'savedempty', title: 'Saved Empty', icon: 'heart-outline', route: '/savedempty' },
 

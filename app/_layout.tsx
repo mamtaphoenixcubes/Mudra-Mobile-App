@@ -39,8 +39,8 @@ export default function RootLayout() {
               <Stack.Screen name="mudrameditation" options={{ headerShown: false }} />
               <Stack.Screen name="sessionplayer" options={{ headerShown: false }} />
               <Stack.Screen name="mudrasessionplayer" options={{ headerShown: false }} />
-               <Stack.Screen name="moodresults" options={{ headerShown: false }} />
-               <Stack.Screen name="practicemode" options={{ headerShown: false }} />
+              <Stack.Screen name="moodresults" options={{ headerShown: false }} />
+              <Stack.Screen name="practicemode" options={{ headerShown: false }} />
 
               <Stack.Screen name="needdetail" options={{ headerShown: false }} />
               <Stack.Screen name="elementtracker" options={{ headerShown: false }} />
@@ -89,6 +89,16 @@ export default function RootLayout() {
               <Stack.Screen name="updates" options={{ headerShown: false }} />
 
               <Stack.Screen name="editprofile" options={{ headerShown: false }} />
+
+              <Stack.Screen name="asana" options={{ headerShown: false }} />
+              <Stack.Screen name="asanadetail" options={{ headerShown: false }} />
+              <Stack.Screen name="asanaplayer" options={{ headerShown: false }} />
+              <Stack.Screen name="asanalist" options={{ headerShown: false }} />
+
+              <Stack.Screen name="pranayama" options={{ headerShown: false }} />
+              <Stack.Screen name="pranayamalist" options={{ headerShown: false }} />
+
+
             </Stack>
             <StatusBar style="auto" />
           </ThemeProvider>

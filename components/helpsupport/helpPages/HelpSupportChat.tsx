@@ -153,6 +153,9 @@ export default function HelpSupportChat() {
     const [isBotTyping, setIsBotTyping] = useState(false);
     const scrollRef = useRef<ScrollView>(null);
     const [assignedToName, setAssignedToName] = useState<string | null>(null);
+    const [showClosurePrompt, setShowClosurePrompt] = useState(false);
+    const [conversationEnded, setConversationEnded] = useState(false);
+    const [wantsMoreHelp, setWantsMoreHelp] = useState(false);
 
     useEffect(() => {
         if (isLoggedIn) {
@@ -264,11 +267,32 @@ export default function HelpSupportChat() {
         const delay = 500 + Math.random() * 400;
         setTimeout(() => {
             setIsBotTyping(false);
-            writeMessage('bot', text).catch((err) => console.log('Bot reply write error:', err));
+            writeMessage('bot', text)
+                .then(() => setShowClosurePrompt(true))
+                .catch((err) => console.log('Bot reply write error:', err));
         }, delay);
     };
 
+    // const handleQuickReply = (faq: FAQItem) => {
+    //     writeMessage('user', faq.question).catch((err) => console.log('User message write error:', err));
+    //     if (hasHumanJoined) return;
+    //     respondAsBot(faq.answer);
+    // };
+
+    // const handleSend = () => {
+    //     const trimmed = input.trim();
+    //     if (!trimmed) return;
+
+    //     writeMessage('user', trimmed).catch((err) => console.log('User message write error:', err));
+    //     setInput('');
+
+    //     if (hasHumanJoined) return;
+    //     const lower = trimmed.toLowerCase();
+    //     const match = FAQ_ITEMS.find((faq) => faq.keywords.some((kw) => lower.includes(kw)));
+    //     respondAsBot(match ? match.answer : FALLBACK_ANSWER);
+    // };
     const handleQuickReply = (faq: FAQItem) => {
+        setWantsMoreHelp(false);
         writeMessage('user', faq.question).catch((err) => console.log('User message write error:', err));
         if (hasHumanJoined) return;
         respondAsBot(faq.answer);
@@ -278,6 +302,7 @@ export default function HelpSupportChat() {
         const trimmed = input.trim();
         if (!trimmed) return;
 
+        setWantsMoreHelp(false);
         writeMessage('user', trimmed).catch((err) => console.log('User message write error:', err));
         setInput('');
 
@@ -286,6 +311,7 @@ export default function HelpSupportChat() {
         const match = FAQ_ITEMS.find((faq) => faq.keywords.some((kw) => lower.includes(kw)));
         respondAsBot(match ? match.answer : FALLBACK_ANSWER);
     };
+
 
     const handleChooseLogin = () => {
         router.push({
@@ -299,7 +325,26 @@ export default function HelpSupportChat() {
         setShowEntryPrompt(false);
     };
 
-    const showSuggestions = !messages.some((m) => m.sender === 'user');
+    const handleClosureDone = () => {
+        setShowClosurePrompt(false);
+        setConversationEnded(true);
+        writeMessage('user', 'Got it, thanks!').catch((err) => console.log('Closure message error:', err));
+
+        if (!uid) return;
+        setDoc(
+            doc(db, 'supportChats', uid),
+            { queryResolved: true, queryResolvedAt: serverTimestamp() },
+            { merge: true }
+        ).catch((err) => console.log('Resolve flag error:', err));
+    };
+
+    const handleClosureContinue = () => {
+        setShowClosurePrompt(false);
+        setWantsMoreHelp(true);
+    };
+
+    // const showSuggestions = !messages.some((m) => m.sender === 'user');
+    const showSuggestions = wantsMoreHelp || !messages.some((m) => m.sender === 'user');
     const hasHumanJoined = messages.some((m) => m.sender === 'admin');
 
     return (
@@ -390,10 +435,42 @@ export default function HelpSupportChat() {
                         </View>
                     ))}
 
-                {!showEntryPrompt && isBotTyping && (
+                {/* {!showEntryPrompt && isBotTyping && (
                     <View style={[styles.bubbleRow, styles.bubbleRowBot]}>
                         <BotAvatar color={colors.primary} />
                         <TypingIndicator bubbleColor={colors.surfaceAlt} dotColor={colors.textMuted as string} />
+                    </View>
+                )} */}
+                {!showEntryPrompt && showClosurePrompt && !conversationEnded && (
+                    <View style={[styles.bubbleRow, styles.bubbleRowBot]}>
+                        <BotAvatar color={colors.primary} />
+                        <View style={[styles.bubble, styles.botBubbleShape, { backgroundColor: colors.surfaceAlt, maxWidth: '80%' }]}>
+                            <Text style={[styles.bubbleText, { color: colors.text }]}>
+                                Is there anything else we may help you with today?
+                            </Text>
+
+                            <View style={styles.closureBtnRow}>
+                                <TouchableOpacity
+                                    style={[styles.closurePillBtn, { borderColor: colors.primary }]}
+                                    activeOpacity={0.7}
+                                    onPress={handleClosureDone}
+                                >
+                                    <Text style={[styles.closurePillBtnText, { color: colors.primary }]}>
+                                        Got it, thanks!
+                                    </Text>
+                                </TouchableOpacity>
+
+                                <TouchableOpacity
+                                    style={[styles.closurePillBtn, { borderColor: colors.primary }]}
+                                    activeOpacity={0.7}
+                                    onPress={handleClosureContinue}
+                                >
+                                    <Text style={[styles.closurePillBtnText, { color: colors.primary }]}>
+                                        Need further help
+                                    </Text>
+                                </TouchableOpacity>
+                            </View>
+                        </View>
                     </View>
                 )}
 
@@ -415,7 +492,7 @@ export default function HelpSupportChat() {
                 )}
             </ScrollView>
 
-            {!showEntryPrompt && (
+            {!showEntryPrompt && !conversationEnded && (
                 <View style={[styles.inputRow, { borderTopColor: colors.dividerDark, backgroundColor: colors.background }]}>
                     <TextInput
                         value={input}
@@ -583,5 +660,21 @@ const styles = StyleSheet.create({
         borderRadius: moderateScale(19),
         alignItems: 'center',
         justifyContent: 'center',
+    },
+    closureBtnRow: {
+        flexDirection: 'row',
+        gap: moderateScale(8),
+        marginTop: moderateScale(10),
+    },
+    closurePillBtn: {
+        borderWidth: 1,
+        borderRadius: moderateScale(18),
+        paddingVertical: moderateScale(8),
+        paddingHorizontal: moderateScale(12),
+    },
+    closurePillBtnText: {
+        fontFamily: 'SF-Pro-Display',
+        fontSize: moderateScale(12.5),
+        fontWeight: '600',
     },
 });

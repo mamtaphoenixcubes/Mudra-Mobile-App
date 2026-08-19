@@ -1,7 +1,6 @@
 import React from 'react'
 import { View, Text, ScrollView, Image, TouchableOpacity } from 'react-native'
 import { useRouter } from 'expo-router'
-// import { practiceStyles as styles } from '@/assets/styles/practice/practiceStyles'
 import { getPracticeStyles } from '@/assets/styles/practice/practiceStyles'
 import { useTheme } from '@/constants/ThemeContext'
 import PracticeSectionHeader from './PracticeSectionHeader'
