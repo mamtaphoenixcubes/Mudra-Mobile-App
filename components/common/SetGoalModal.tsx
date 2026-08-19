@@ -74,6 +74,8 @@ export default function SetGoalModal({ visible, onClose }: SetGoalModalProps) {
         }
     }, [visible, goal]);
 
+    const readOnly = Boolean(goal && goal.GoalStatus === 'ACTIVE');
+
 
     const parsed = parseInt(inputValue, 10);
     const isValid = !Number.isNaN(parsed) && parsed >= MIN_TARGET && parsed <= MAX_TARGET;
@@ -116,7 +118,7 @@ export default function SetGoalModal({ visible, onClose }: SetGoalModalProps) {
                     >
                         <View style={[styles.handle, { backgroundColor: colors.border }]} />
 
-                        <Text style={[styles.title, { color: colors.text }]}>Set New Goal</Text>
+                        <Text style={[styles.title, { color: colors.text }]}>{readOnly ? 'View Goal' : 'Set New Goal'}</Text>
                         <Text style={[styles.subtitle, { color: colors.textSub }]}>
                             Choose what you want to track weekly.
                         </Text>
@@ -129,7 +131,9 @@ export default function SetGoalModal({ visible, onClose }: SetGoalModalProps) {
                                     { backgroundColor: selectedType === 'sessions' ? '#9A85FE' : colors.surfaceAlt },
                                 ]}
                                 activeOpacity={0.7}
-                                onPress={() => setSelectedType('sessions')}
+                                onPress={() => {
+                                    if (!readOnly) setSelectedType('sessions');
+                                }}
                             >
                                 <Ionicons
                                     name="flame-outline"
@@ -152,7 +156,9 @@ export default function SetGoalModal({ visible, onClose }: SetGoalModalProps) {
                                     { backgroundColor: selectedType === 'minutes' ? '#9A85FE' : colors.surfaceAlt },
                                 ]}
                                 activeOpacity={0.7}
-                                onPress={() => setSelectedType('minutes')}
+                                onPress={() => {
+                                    if (!readOnly) setSelectedType('minutes');
+                                }}
                             >
                                 <Ionicons
                                     name="time-outline"
@@ -170,15 +176,16 @@ export default function SetGoalModal({ visible, onClose }: SetGoalModalProps) {
                             </TouchableOpacity>
                         </View>
 
-                        <Text style={[styles.label, { color: colors.textSub }]}>Weekly Target</Text>
+                        <Text style={[styles.label, { color: colors.textSub }]}>{readOnly ? 'Current Target' : 'Weekly Target'}</Text>
                         <View style={[styles.inputRow, { backgroundColor: colors.surfaceAlt, borderColor: colors.border }]}>
                             <Ionicons name="flag-outline" size={18} color={colors.textSub} />
                             <TextInput
                                 style={[styles.input, { color: colors.text }]}
                                 value={inputValue}
-                                onChangeText={setInputValue}
+                                onChangeText={(t) => { if (!readOnly) setInputValue(t); }}
                                 keyboardType="number-pad"
                                 maxLength={3}
+                                editable={!readOnly}
                             />
                             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                                 <Text style={[styles.inputSuffix, { color: colors.textSub }]}>
@@ -187,6 +194,7 @@ export default function SetGoalModal({ visible, onClose }: SetGoalModalProps) {
 
                                 <TouchableOpacity
                                     onPress={() => {
+                                        if (readOnly) return;
                                         setResetType((prev) => {
                                             switch (prev) {
                                                 case 'WEEKLY':
@@ -225,7 +233,7 @@ export default function SetGoalModal({ visible, onClose }: SetGoalModalProps) {
                             </View>
                         </View>
 
-                        {!isValid && (
+                        {!isValid && !readOnly && (
                             <Text style={styles.errorText}>Enter a value between 1 and 999</Text>
                         )}
 
@@ -235,16 +243,18 @@ export default function SetGoalModal({ visible, onClose }: SetGoalModalProps) {
                                 activeOpacity={0.7}
                                 onPress={onClose}
                             >
-                                <Text style={[styles.cancelText, { color: colors.textSub }]}>Cancel</Text>
+                                <Text style={[styles.cancelText, { color: colors.textSub }]}>{readOnly ? 'Close' : 'Cancel'}</Text>
                             </TouchableOpacity>
-                            <TouchableOpacity
-                                style={[styles.saveBtn, { opacity: isValid ? 1 : 0.5 }]}
-                                activeOpacity={0.7}
-                                onPress={handleSave}
-                                disabled={!isValid}
-                            >
-                                <Text style={styles.saveText}>Save Goal</Text>
-                            </TouchableOpacity>
+                            {!readOnly && (
+                                <TouchableOpacity
+                                    style={[styles.saveBtn, { opacity: isValid ? 1 : 0.5 }]}
+                                    activeOpacity={0.7}
+                                    onPress={handleSave}
+                                    disabled={!isValid}
+                                >
+                                    <Text style={styles.saveText}>Save Goal</Text>
+                                </TouchableOpacity>
+                            )}
                         </View>
                     </View>
                 </TouchableOpacity>

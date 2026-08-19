@@ -1,8 +1,18 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Modal, Pressable, StyleSheet, Dimensions } from 'react-native';
+import {
+    View,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    Modal,
+    Pressable,
+    StyleSheet,
+    Dimensions,
+} from 'react-native';
 import { useTheme } from '@/constants/ThemeContext';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
 const moderateScale = (size: number, factor = 0.5) =>
     size + ((SCREEN_WIDTH - 375) / 375) * size * factor;
 
@@ -12,30 +22,70 @@ interface CreatePlaylistModalProps {
     onCreate: (name: string) => void;
 }
 
-export default function CreatePlaylistModal({ visible, onClose, onCreate }: CreatePlaylistModalProps) {
+export default function CreatePlaylistModal({
+    visible,
+    onClose,
+    onCreate,
+}: CreatePlaylistModalProps) {
     const { colors } = useTheme();
+
     const [newName, setNewName] = useState('');
     const [nameFocused, setNameFocused] = useState(false);
 
-    const handleCreate = () => {
-        if (!newName.trim()) return;
-        onCreate(newName.trim());
+    const handleSubmit = () => {
+        const trimmedName = newName.trim();
+
+        if (!trimmedName) return;
+
+        onCreate(trimmedName);
         setNewName('');
     };
 
     return (
-        <Modal visible={visible} transparent animationType="fade">
-            <Pressable style={styles.modalBackdrop} onPress={onClose}>
-                <Pressable style={[styles.modalCard, { backgroundColor: colors.card }]}>
-                    <Text style={[styles.modalTitle, { color: colors.text }]}>New playlist</Text>
-                    <Text style={[styles.modalSubtitle, { color: colors.textSub }]}>
+        <Modal
+            visible={visible}
+            transparent
+            animationType="fade"
+            onRequestClose={onClose}
+        >
+            <Pressable
+                style={styles.modalBackdrop}
+                onPress={onClose}
+            >
+                <Pressable
+                    style={[
+                        styles.modalCard,
+                        { backgroundColor: colors.card },
+                    ]}
+                    onPress={(e) => e.stopPropagation()}
+                >
+                    <Text
+                        style={[
+                            styles.modalTitle,
+                            { color: colors.text },
+                        ]}
+                    >
+                        New playlist
+                    </Text>
+
+                    <Text
+                        style={[
+                            styles.modalSubtitle,
+                            { color: colors.textSub },
+                        ]}
+                    >
                         Give it a name you&apos;ll recognize later
                     </Text>
 
                     <View
                         style={[
                             styles.modalInputCard,
-                            { backgroundColor: colors.inputBg, borderColor: nameFocused ? colors.primary : 'transparent' },
+                            {
+                                backgroundColor: colors.inputBg,
+                                borderColor: nameFocused
+                                    ? colors.primary
+                                    : 'transparent',
+                            },
                         ]}
                     >
                         <TextInput
@@ -43,31 +93,58 @@ export default function CreatePlaylistModal({ visible, onClose, onCreate }: Crea
                             onChangeText={setNewName}
                             placeholder="My playlist"
                             placeholderTextColor={colors.textMuted}
-                            style={[styles.modalInput, { color: colors.text }]}
+                            style={[
+                                styles.modalInput,
+                                { color: colors.text },
+                            ]}
                             onFocus={() => setNameFocused(true)}
                             onBlur={() => setNameFocused(false)}
                             autoFocus
                             maxLength={40}
                             returnKeyType="done"
-                            onSubmitEditing={handleCreate}
+                            onSubmitEditing={handleSubmit}
                         />
                     </View>
 
                     <TouchableOpacity
                         activeOpacity={0.85}
                         disabled={!newName.trim()}
-                        onPress={handleCreate}
-                        style={[styles.modalCreateBtn, { backgroundColor: newName.trim() ? colors.primary : colors.dividerDark }]}
+                        onPress={handleSubmit}
+                        style={[
+                            styles.modalCreateBtn,
+                            {
+                                backgroundColor: newName.trim()
+                                    ? colors.primary
+                                    : colors.dividerDark,
+                            },
+                        ]}
                     >
-                        <Text style={[styles.modalCreateBtnText, { color: colors.white }]}>Create</Text>
+                        <Text
+                            style={[
+                                styles.modalCreateBtnText,
+                                { color: colors.white },
+                            ]}
+                        >
+                            Create
+                        </Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity
                         activeOpacity={0.7}
                         onPress={onClose}
-                        style={[styles.modalCancelBtn, { backgroundColor: colors.surfaceAlt }]}
+                        style={[
+                            styles.modalCancelBtn,
+                            { backgroundColor: colors.surfaceAlt },
+                        ]}
                     >
-                        <Text style={[styles.modalCancelBtnText, { color: colors.text }]}>Cancel</Text>
+                        <Text
+                            style={[
+                                styles.modalCancelBtnText,
+                                { color: colors.text },
+                            ]}
+                        >
+                            Cancel
+                        </Text>
                     </TouchableOpacity>
                 </Pressable>
             </Pressable>

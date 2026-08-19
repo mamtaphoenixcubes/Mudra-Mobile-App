@@ -282,7 +282,7 @@ export default function VerifyEmail() {
 
                         :
 
-                        `${process.env.EXPO_PUBLIC_API_URL}/otp/verify`;
+                        `${process.env.EXPO_PUBLIC_API_URL}/users/verify-registration-otp`;
 
                 /*
                 |--------------------------------------------------------------------------

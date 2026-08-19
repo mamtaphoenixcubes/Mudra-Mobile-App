@@ -15,6 +15,7 @@ import { useMudraStore } from '@/store/mudraStore';
 import { useNidraStore } from '@/store/nidraStore';
 import { usePlaylistStore, type PlaylistSession } from '@/store/playlistStore';
 import PlaylistMediaSelect from './PlaylistMediaSelect';
+import { useAuthStore } from '@/store/authStore';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const moderateScale = (size: number, factor = 0.5) =>
@@ -42,26 +43,94 @@ const CATEGORY_AVAILABLE: Record<CategoryKey, boolean> = {
 
 interface PlaylistAddItemsProps {
     playlistId: string;
+    playlistType: 'audio' | 'video';
+    playlistName?: string;
     category: CategoryKey;
     onClose: () => void;
 }
 
-export default function PlaylistAddItems({ playlistId, category, onClose }: PlaylistAddItemsProps) {
+export default function PlaylistAddItems({
+    playlistId,
+    playlistType,
+    category,
+    playlistName,
+    onClose,
+}: PlaylistAddItemsProps) {
     const { colors } = useTheme();
 
     const isAvailable = CATEGORY_AVAILABLE[category] ?? false;
-
+ const { user } = useAuthStore();
+ const profileDocumentId = user?.id || user?.profileDocumentId;
     // ── Data sources ──
     const mudras = useMudraStore((s) => s.mudras);
     const fetchMudras = useMudraStore((s) => s.fetchMudras);
 
-    const nidras = useNidraStore((s) => s.nidras);
-    const fetchNidras = useNidraStore((s) => s.fetchNidras);
+ const nidras = useNidraStore((s) => s.nidras);
+const fetchNidras = useNidraStore((s) => s.fetchNidras);
+const fetchNidraById = useNidraStore((s) => s.fetchNidraById);
+const selectedNidra = useNidraStore((s) => s.selectedNidra);
+const loadingNidra = useNidraStore((s) => s.loadingNidra);
 
-    useEffect(() => {
-        if (category === 'mudra') fetchMudras();
-        if (category === 'nidra') fetchNidras({});
-    }, [category]);
+useEffect(() => {
+    if (category === 'mudra') {
+        fetchMudras();
+    }
+
+    if (category === 'nidra') {
+        fetchNidras({});
+    }
+}, [category]);
+
+useEffect(() => {
+    if (
+        category === 'nidra' &&
+        selectedNidra &&
+        loadingNidra === false
+    ) {
+        console.log(
+            'DETAILED NIDRA FROM STORE:',
+            JSON.stringify(selectedNidra, null, 2)
+        );
+
+        setSelectedRawItem(selectedNidra);
+    }
+}, [selectedNidra, loadingNidra, category]);
+
+const handleRowPress = async (itemId: string) => {
+    try {
+        if (category === 'mudra') {
+            const raw = mudraList.find(
+                (m: any) =>
+                    String(m.documentId ?? m.id) === itemId
+            );
+
+            if (raw) {
+                setSelectedRawItem(raw);
+            }
+
+            return;
+        }
+
+        if (category === 'nidra') {
+            const nidraDocumentId = String(itemId);
+
+            console.log(
+                'Fetching Nidra details:',
+                nidraDocumentId
+            );
+
+            await fetchNidraById(
+                nidraDocumentId,
+                profileDocumentId
+            );
+        }
+    } catch (error) {
+        console.error(
+            'Failed to fetch Nidra details:',
+            error
+        );
+    }
+};
 
     // ── Drill-down state: which raw mudra/nidra is currently open ──
     const [selectedRawItem, setSelectedRawItem] = useState<any | null>(null);
@@ -110,25 +179,19 @@ export default function PlaylistAddItems({ playlistId, category, onClose }: Play
             : `${process.env.EXPO_PUBLIC_IMAGE_API_URL}${thumbnail}`;
     };
 
-    const handleRowPress = (itemId: string) => {
-        const raw =
-            category === 'mudra'
-                ? mudraList.find((m: any) => String(m.documentId ?? m.id) === itemId)
-                : nidraList.find((n: any) => String(n.documentId ?? n.id) === itemId);
-        if (raw) setSelectedRawItem(raw);
-    };
-
     // ── Drill-down view replaces the list in place — no modal, no navigation ──
-    if (selectedRawItem) {
-        return (
-            <PlaylistMediaSelect
-                playlistId={playlistId}
-                rawItem={selectedRawItem}
-                category={category as 'mudra' | 'nidra'}
-                onBack={() => setSelectedRawItem(null)}
-            />
-        );
-    }
+            if (selectedRawItem) {
+                return (
+        <PlaylistMediaSelect
+            playlistId={playlistId}
+            playlistType={playlistType}
+            playlistName={playlistName}
+            rawItem={selectedRawItem}
+            category={category as 'mudra' | 'nidra'}
+            onBack={() => setSelectedRawItem(null)}
+        />
+                );
+            }
 
     return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>

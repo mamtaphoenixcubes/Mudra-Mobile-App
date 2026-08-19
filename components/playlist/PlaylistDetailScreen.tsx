@@ -28,9 +28,11 @@ type FilterTab = 'all' | 'audio' | 'video';
 export default function PlaylistDetailScreen() {
     const { colors } = useTheme();
 
-    const { id } = useLocalSearchParams();
+  const { id, playlistType } = useLocalSearchParams<{
+    id: string;
+    playlistType: 'audio' | 'video';
+}>();
     const playlistId = typeof id === 'string' ? id : '';
-
     const audioPlaylists = usePlaylistStore((s) => s.audioPlaylists);
     const videoPlaylists = usePlaylistStore((s) => s.videoPlaylists);
     const removeAudiosFromPlaylist = usePlaylistStore(
@@ -318,20 +320,31 @@ export default function PlaylistDetailScreen() {
 
                         <View style={[styles.menuDivider, { backgroundColor: colors.dividerDark }]} />
 
-                        <TouchableOpacity
-                            style={styles.menuItem}
-                            activeOpacity={0.7}
-                            onPress={() => {
-                                setMenuVisible(false);
-                                setCreateModalVisible(true);
-                            }}
-                        >
-                            <Ionicons name="add-circle-outline" size={18} color={colors.text} />
-                            <Text style={[styles.menuItemText, { color: colors.text }]}>Create Playlist</Text>
-                        </TouchableOpacity>
-                    </View>
-                </>
-            )}
+                      <TouchableOpacity
+    style={styles.menuItem}
+    activeOpacity={0.7}
+    onPress={() => {
+        setMenuVisible(false);
+
+        router.push({
+            pathname: '/playlistcategoryselect',
+            params: {
+                playlistId,
+                playlistName: playlist?.title || '',
+                playlistType: playlistType || 'audio',
+            },
+        });
+                    }}
+                >
+                    <Ionicons name="add-circle-outline" size={18} color={colors.text} />
+
+                    <Text style={[styles.menuItemText, { color: colors.text }]}>
+                        {playlistType === 'video' ? 'Add Video' : 'Add Audios'}
+                    </Text>
+                </TouchableOpacity>
+                                    </View>
+                                </>
+                            )}
             {filterMenuVisible && (
                 <>
                     <TouchableOpacity

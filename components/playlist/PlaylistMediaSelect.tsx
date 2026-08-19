@@ -12,6 +12,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/constants/ThemeContext';
 import AppHeader from '@/components/common/AppHeader';
 import { usePlaylistStore, type PlaylistSession } from '@/store/playlistStore';
+import axios from 'axios';
+import { router } from 'expo-router';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const moderateScale = (size: number, factor = 0.5) =>
@@ -23,6 +25,8 @@ interface FlatMediaItem extends PlaylistSession {
 
 interface PlaylistMediaSelectProps {
     playlistId: string;
+    playlistType: 'audio' | 'video';
+    playlistName?: string;
     rawItem: any;
     category: 'mudra' | 'nidra';
     onBack: () => void;
@@ -48,60 +52,140 @@ const readThumbnail = (obj: any) =>
 
 export default function PlaylistMediaSelect({
     playlistId,
+    playlistType,
+    playlistName,
     rawItem,
     category,
     onBack,
 }: PlaylistMediaSelectProps) {
     const { colors } = useTheme();
-
+const [isSaving, setIsSaving] = useState(false);
     // Subscribing to the reactive `playlists` array itself — needed both so
     // the +/- toggle re-renders instantly, and so we can look up which
     // audio/video type THIS playlist was created as.
-    const playlists = usePlaylistStore((s) => s.playlists);
     const isSessionInPlaylist = usePlaylistStore((s) => s.isSessionInPlaylist);
     const addSessionToPlaylist = usePlaylistStore((s) => s.addSessionToPlaylist);
     const removeSessionFromPlaylist = usePlaylistStore((s) => s.removeSessionFromPlaylist);
+    const [addedIds, setAddedIds] = useState<Set<string>>(new Set());
 
-    const targetPlaylist = useMemo(
-        () => playlists.find((p) => p.id === playlistId),
-        [playlists, playlistId]
-    );
+    // Remote playlists (from server) — used to detect existing items
+    const audioPlaylists = usePlaylistStore((s) => s.audioPlaylists);
+    const videoPlaylists = usePlaylistStore((s) => s.videoPlaylists);
+    const isSessionInLocalPlaylist = usePlaylistStore((s) => s.isSessionInPlaylist);
 
-    const [addedIds, setAddedIds] = useState<Set<string>>(
-        () => new Set(targetPlaylist?.sessions.map((s) => s.id) ?? [])
-    );
-
-    // Keep local state in sync if the underlying playlist changes from elsewhere
-    useEffect(() => {
-        setAddedIds(new Set(targetPlaylist?.sessions.map((s) => s.id) ?? []));
-    }, [targetPlaylist]);
-
-    console.log('playlistId received:', playlistId, 'targetPlaylist found:', targetPlaylist, 'all local playlists:', playlists);
     
-    const playlistType: 'audio' | 'video' = targetPlaylist?.type ?? 'audio';
 
     // ── Flatten this mudra/nidra's content, filtered to match the playlist's type ──
     const sections = useMemo(() => {
-        if (category === 'nidra') {
-            const isNidraVideo =
-                rawItem.MediaType === 'VIDEO_SINGLE' || rawItem.MediaType === 'VIDEO_PLAYLIST';
+      if (category === 'nidra') {
 
-            // Only show this nidra as addable if its media type matches
-            // the target playlist's type (audio playlist ↔ audio nidra, etc).
-            if ((playlistType === 'video') !== isNidraVideo) {
-                return [];
-            }
+    if (playlistType === 'audio') {
+        const audioSingles: FlatMediaItem[] = (
+            Array.isArray(rawItem.AudioSingleSessions)
+                ? rawItem.AudioSingleSessions
+                : []
+        ).map((audio: any) => ({
+            id: String(audio.documentId ?? audio.id),
+            title: readTitle(audio, 'Untitled audio'),
+            duration: readDurationLabel(audio),
+            isVideo: false,
+            thumbnail: readThumbnail(audio),
+            contentTypeOfAudio: 'nidra',
+        }));
 
-            const single: FlatMediaItem = {
-                id: String(rawItem.documentId ?? rawItem.id),
-                title: readTitle(rawItem, 'Untitled nidra'),
-                duration: rawItem.Duration ? `${rawItem.Duration} min` : '',
-                isVideo: isNidraVideo,
-                thumbnail: rawItem.NidraIntroCard?.ThumbnailImage?.[0]?.url ?? null,
+        const audioFromPlaylists: FlatMediaItem[] = (
+            Array.isArray(rawItem.AudioPlaylist)
+                ? rawItem.AudioPlaylist
+                : []
+        ).flatMap((playlist: any) =>
+            (
+                Array.isArray(playlist.audios)
+                    ? playlist.audios
+                    : []
+            ).map((audio: any) => ({
+                id: String(audio.documentId ?? audio.id),
+                title: readTitle(audio, 'Untitled audio'),
+                duration: readDurationLabel(audio),
+                isVideo: false,
+                thumbnail: readThumbnail(audio),
                 contentTypeOfAudio: 'nidra',
-            };
-            return [{ label: 'Session', data: [single] }];
+                groupLabel: readTitle(playlist, 'Playlist'),
+            }))
+        );
+
+        const result = [];
+
+        if (audioSingles.length) {
+            result.push({
+                label: 'Audio Sessions',
+                data: audioSingles,
+            });
         }
+
+        if (audioFromPlaylists.length) {
+            result.push({
+                label: 'Audio Playlists',
+                data: audioFromPlaylists,
+            });
+        }
+
+        return result;
+    }
+
+    // ─────────────────────────────
+    // VIDEO PLAYLIST
+    // ─────────────────────────────
+    const videoSingles: FlatMediaItem[] = (
+        Array.isArray(rawItem.VideoSingleSessions)
+            ? rawItem.VideoSingleSessions
+            : []
+    ).map((video: any) => ({
+        id: String(video.documentId ?? video.id),
+        title: readTitle(video, 'Untitled video'),
+        duration: readDurationLabel(video),
+        isVideo: true,
+        thumbnail: readThumbnail(video),
+        contentTypeOfAudio: 'nidra',
+    }));
+
+    const videoFromPlaylists: FlatMediaItem[] = (
+        Array.isArray(rawItem.VideoPlaylist)
+            ? rawItem.VideoPlaylist
+            : []
+    ).flatMap((playlist: any) =>
+        (
+            Array.isArray(playlist.videos)
+                ? playlist.videos
+                : []
+        ).map((video: any) => ({
+            id: String(video.documentId ?? video.id),
+            title: readTitle(video, 'Untitled video'),
+            duration: readDurationLabel(video),
+            isVideo: true,
+            thumbnail: readThumbnail(video),
+            contentTypeOfAudio: 'nidra',
+            groupLabel: readTitle(playlist, 'Playlist'),
+        }))
+    );
+
+    const result = [];
+
+    if (videoSingles.length) {
+        result.push({
+            label: 'Video Sessions',
+            data: videoSingles,
+        });
+    }
+
+    if (videoFromPlaylists.length) {
+        result.push({
+            label: 'Video Playlists',
+            data: videoFromPlaylists,
+        });
+    }
+
+    return result;
+}
 
         // mudra: only build the sections matching the playlist's type
         if (playlistType === 'audio') {
@@ -168,6 +252,48 @@ export default function PlaylistMediaSelect({
         return result;
     }, [category, rawItem, playlistType]);
 
+    // Items already present in the target playlist (remote or local). These
+    // should not be selectable for adding again. Compute after `sections`
+    // is available to avoid referencing it before initialization.
+    const existingIds = useMemo(() => {
+        const out = new Set<string>();
+
+        // Check remote playlists first
+        if (playlistType === 'audio') {
+            const pl = audioPlaylists.find(
+                (p) => String(p.documentId ?? p.id) === String(playlistId)
+            );
+
+            if (pl && Array.isArray(pl.audios)) {
+                pl.audios.forEach((a: any) => out.add(String(a.documentId ?? a.id)));
+            }
+        } else {
+            const pl = videoPlaylists.find(
+                (p) => String(p.documentId ?? p.id) === String(playlistId)
+            );
+
+            if (pl && Array.isArray(pl.videos)) {
+                pl.videos.forEach((v: any) => out.add(String(v.documentId ?? v.id)));
+            }
+        }
+
+        // Also check local playlists (store.playlists) using helper
+        // If playlistId refers to a local playlist, mark its sessions as existing
+        sections?.forEach((section) => {
+            section.data.forEach((itm: any) => {
+                try {
+                    if (isSessionInLocalPlaylist(String(playlistId), String(itm.id))) {
+                        out.add(String(itm.id));
+                    }
+                } catch (e) {
+                    // ignore
+                }
+            });
+        });
+
+        return out;
+    }, [audioPlaylists, videoPlaylists, playlistId, playlistType, isSessionInLocalPlaylist, sections]);
+
     const totalCount = sections.reduce((sum, s) => sum + s.data.length, 0);
     const selectedCount = sections.reduce(
         (sum, s) => sum + s.data.filter((item) => addedIds.has(item.id)).length,
@@ -175,6 +301,9 @@ export default function PlaylistMediaSelect({
     );
 
     const handleToggle = (session: FlatMediaItem) => {
+        // Prevent toggling items that already exist in the playlist
+        if (existingIds.has(session.id)) return;
+
         setAddedIds((prev) => {
             const next = new Set(prev);
             if (next.has(session.id)) {
@@ -195,6 +324,109 @@ export default function PlaylistMediaSelect({
             : `${process.env.EXPO_PUBLIC_IMAGE_API_URL}${thumbnail}`;
     };
 
+
+  const handleDone = async () => {
+    if (isSaving) return;
+
+    try {
+        setIsSaving(true);
+
+        if (playlistType === 'audio') {
+            const audioDocumentIds = Array.from(
+                new Set(
+                    sections
+                        .flatMap((section) => section.data)
+                        .filter(
+                            (item) =>
+                                !item.isVideo &&
+                                addedIds.has(item.id)
+                        )
+                        .map((item) => String(item.id))
+                )
+            );
+
+            if (audioDocumentIds.length === 0) {
+                onBack();
+                return;
+            }
+
+            console.log(
+                'ADDING AUDIO TO PLAYLIST:',
+                JSON.stringify(
+                    {
+                        playlistId,
+                        audioDocumentIds,
+                    },
+                    null,
+                    2
+                )
+            );
+
+            await axios.put(
+                `${process.env.EXPO_PUBLIC_API_URL}/audio-playlists/${playlistId}/audios`,
+                {
+                    audioDocumentIds,
+                }
+            );
+        } else {
+            const videoDocumentIds = Array.from(
+                new Set(
+                    sections
+                        .flatMap((section) => section.data)
+                        .filter(
+                            (item) =>
+                                item.isVideo &&
+                                addedIds.has(item.id)
+                        )
+                        .map((item) => String(item.id))
+                )
+            );
+
+            if (videoDocumentIds.length === 0) {
+                onBack();
+                return;
+            }
+
+            console.log(
+                'ADDING VIDEO TO PLAYLIST:',
+                JSON.stringify(
+                    {
+                        playlistId,
+                        videoDocumentIds,
+                    },
+                    null,
+                    2
+                )
+            );
+
+            await axios.put(
+                `${process.env.EXPO_PUBLIC_API_URL}/video-playlists/${playlistId}/videos`,
+                {
+                    videoDocumentIds,
+                }
+            );
+        }
+
+        router.replace({
+    pathname: '/playlistcategoryselect',
+    params: {
+        playlistId,
+        playlistType,
+        playlistName: String(rawItem?.name ?? rawItem?.Name ?? ''),
+    },
+});
+
+    } catch (error: any) {
+        console.log(
+            playlistType === 'audio'
+                ? 'ADD_AUDIO_TO_PLAYLIST_ERROR:'
+                : 'ADD_VIDEO_TO_PLAYLIST_ERROR:',
+            error?.response?.data || error
+        );
+    } finally {
+        setIsSaving(false);
+    }
+};
     return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>
             <AppHeader onBackPress={onBack} />
@@ -229,6 +461,7 @@ export default function PlaylistMediaSelect({
 
                                 {section.data.map((item, index) => {
                                     const added = addedIds.has(item.id);
+                                    const alreadyExists = existingIds.has(item.id);
                                     const uri = resolveThumbnailUri(item.thumbnail);
 
                                     return (
@@ -266,18 +499,21 @@ export default function PlaylistMediaSelect({
                                             </View>
 
                                             <TouchableOpacity
-                                                key={`${item.id}-${added}`}
+                                                key={`${item.id}-${added}-${alreadyExists}`}
                                                 onPress={() => handleToggle(item)}
                                                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                                                disabled={alreadyExists}
                                                 style={[
                                                     styles.toggleBtn,
-                                                    { backgroundColor: added ? colors.primary : colors.primaryLight },
+                                                    alreadyExists
+                                                        ? { backgroundColor: colors.surfaceAlt }
+                                                        : { backgroundColor: added ? colors.primary : colors.primaryLight },
                                                 ]}
                                             >
                                                 <Ionicons
-                                                    name={added ? 'remove' : 'add'}
+                                                    name={alreadyExists ? 'checkmark' : (added ? 'remove' : 'add')}
                                                     size={18}
-                                                    color={added ? '#FFFFFF' : (colors.primary as string)}
+                                                    color={alreadyExists ? (colors.textSub as string) : (added ? '#FFFFFF' : (colors.primary as string))}
                                                 />
                                             </TouchableOpacity>
                                         </View>
@@ -291,12 +527,21 @@ export default function PlaylistMediaSelect({
                         <Text style={[styles.doneBarCount, { color: colors.textSub }]}>
                             {selectedCount} selected
                         </Text>
-                        <TouchableOpacity
+                      <TouchableOpacity
                             activeOpacity={0.85}
-                            onPress={onBack}
-                            style={[styles.doneBtn, { backgroundColor: colors.primary }]}
+                            onPress={handleDone}
+                            disabled={isSaving}
+                            style={[
+                                styles.doneBtn,
+                                {
+                                    backgroundColor: colors.primary,
+                                    opacity: isSaving ? 0.6 : 1,
+                                },
+                            ]}
                         >
-                            <Text style={styles.doneBtnText}>Done</Text>
+                            <Text style={styles.doneBtnText}>
+                                {isSaving ? 'Saving...' : 'Done'}
+                            </Text>
                         </TouchableOpacity>
                     </View>
                 </>

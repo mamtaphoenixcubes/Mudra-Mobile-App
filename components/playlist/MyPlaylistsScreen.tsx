@@ -20,6 +20,8 @@ import AppHeader from '@/components/common/AppHeader';
 import StandaloneTabBar from '@/components/home/StandaloneTabBar';
 import ConfirmModal from '@/components/common/ConfirmModal';
 import { useMudraStore } from '@/store/mudraStore';
+import axios from 'axios';
+import CreatePlaylistModal from './CreatePlaylistModal';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const moderateScale = (size: number, factor = 0.5) =>
     size + ((SCREEN_WIDTH - 375) / 375) * size * factor;
@@ -38,8 +40,7 @@ export default function MyPlaylistsScreen() {
     );
     const [selectedTab, setSelectedTab] = useState<'audio' | 'video'>('audio');
     const [createVisible, setCreateVisible] = useState(false);
-    const [newName, setNewName] = useState('');
-    const [nameFocused, setNameFocused] = useState(false);
+
     const clearMudras = useMudraStore((state) => state.clearSelectedMudra);
     const deleteRemotePlaylist = usePlaylistStore((s) => s.deleteRemotePlaylist);
     const deleteVideoPlaylist = usePlaylistStore(
@@ -102,20 +103,107 @@ export default function MyPlaylistsScreen() {
             ? audioPlaylists
             : videoPlaylists;
 
-    const handleCreate = async () => {
-        if (!newName.trim()) return;
-        const created = createPlaylist(newName, selectedTab); // local createPlaylist is synchronous, not async — returns Playlist directly
-        setNewName('');
+const handleCreate = async (name: string) => {
+    const trimmedName = name.trim();
+
+    if (!trimmedName || !profileDocumentId) return;
+
+    const description = `${trimmedName} playlist`;
+
+    try {
+        // Keep API creation based on selected tab
+        const createEndpoint =
+            selectedTab === 'video'
+                ? 'video-playlists/create'
+                : 'audio-playlists';
+
+        const result = await axios.post(
+            `${process.env.EXPO_PUBLIC_API_URL}/${createEndpoint}`,
+            {
+                profileDocumentId,
+                title: trimmedName,
+                description,
+            },
+            {
+                headers: token
+                    ? {
+                          Authorization: `Bearer ${token}`,
+                      }
+                    : undefined,
+            }
+        );
+
+        console.log('========== PLAYLIST CREATED ==========');
+        console.log(
+            'FULL RESPONSE:',
+            JSON.stringify(result?.data, null, 2)
+        );
+
+        const created =
+            result?.data?.data ||
+            result?.data?.playlist ||
+            result?.data;
+
+        console.log(
+            'CREATED PLAYLIST:',
+            JSON.stringify(created, null, 2)
+        );
+
+        const playlistId = String(
+            created?.data?.documentId ||
+            created?.documentId ||
+            created?.document_id ||
+            created?.id ||
+            ''
+        );
+
+        console.log('PLAYLIST ID:', playlistId);
+        console.log('PLAYLIST NAME:', trimmedName);
+        console.log('PLAYLIST TYPE:', selectedTab);
+
         setCreateVisible(false);
 
-        router.push({
-            pathname: '/playlistcategoryselect',
-            params: {
-                playlistId: created.id,
-                playlistName: newName.trim(),
-            },
-        });
-    };
+        if (playlistId) {
+            router.push({
+                pathname: '/playlistcategoryselect',
+                params: {
+                    playlistId,
+                    playlistName: trimmedName,
+
+                    // IMPORTANT:
+                    // Pass Audio / Video type to next screen
+                    playlistType: selectedTab,
+
+                    // Optional boolean if next screen uses isVideo
+                    isVideo: selectedTab === 'video' ? 'true' : 'false',
+                },
+            });
+        } else {
+            console.log(
+                '❌ Cannot navigate - playlist ID is missing'
+            );
+        }
+
+        // Refresh correct playlist list
+        if (selectedTab === 'audio') {
+            await fetchUserPlaylists(
+                profileDocumentId,
+                token || undefined
+            );
+        } else {
+            await fetchVideoPlaylists(
+                profileDocumentId,
+                token || undefined
+            );
+        }
+
+    } catch (error: any) {
+        console.log(
+            'CREATE_PLAYLIST_ERROR:',
+            error?.response?.data || error
+        );
+    }
+};
     const onRefresh = async () => {
         if (!profileDocumentId) return;
 
@@ -234,12 +322,15 @@ export default function MyPlaylistsScreen() {
                                 <TouchableOpacity
                                     style={styles.cardBody}
                                     activeOpacity={0.7}
-                                    onPress={() =>
-                                        router.push({
-                                            pathname: '/playlistdetail',
-                                            params: { id: playlistId },
-                                        })
-                                    }
+                                  onPress={() =>
+    router.push({
+        pathname: '/playlistdetail',
+        params: {
+            id: playlistId,
+            playlistType: selectedTab,
+        },
+    })
+}
                                 >
                                     <View style={[styles.cardIconBox, { backgroundColor: colors.primaryLight }]}>
                                         <Ionicons name="list" size={20} color={colors.primary} />
@@ -275,64 +366,11 @@ export default function MyPlaylistsScreen() {
                 </ScrollView>
             )}
 
-            {/* Create playlist modal */}
-            <Modal visible={createVisible} transparent animationType="fade">
-                <Pressable
-                    style={styles.modalBackdrop}
-                    onPress={() => setCreateVisible(false)}
-                >
-                    <Pressable style={[styles.modalCard, { backgroundColor: colors.card }]}>
-                        <Text style={[styles.modalTitle, { color: colors.text }]}>New playlist</Text>
-                        <Text style={[styles.modalSubtitle, { color: colors.textSub }]}>
-                            Give it a name you&apos;ll recognize later
-                        </Text>
-
-                        <View
-                            style={[
-                                styles.modalInputCard,
-                                {
-                                    backgroundColor: colors.inputBg,
-                                    borderColor: nameFocused ? colors.primary : 'transparent',
-                                },
-                            ]}
-                        >
-                            <TextInput
-                                value={newName}
-                                onChangeText={setNewName}
-                                placeholder="My playlist"
-                                placeholderTextColor={colors.textMuted}
-                                style={[styles.modalInput, { color: colors.text }]}
-                                onFocus={() => setNameFocused(true)}
-                                onBlur={() => setNameFocused(false)}
-                                autoFocus
-                                maxLength={40}
-                                returnKeyType="done"
-                                onSubmitEditing={handleCreate}
-                            />
-                        </View>
-
-                        <TouchableOpacity
-                            activeOpacity={0.85}
-                            disabled={!newName.trim()}
-                            onPress={handleCreate}
-                            style={[
-                                styles.modalCreateBtn,
-                                { backgroundColor: newName.trim() ? colors.primary : colors.dividerDark },
-                            ]}
-                        >
-                            <Text style={[styles.modalCreateBtnText, { color: colors.white }]}>Create</Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity
-                            activeOpacity={0.7}
-                            onPress={() => setCreateVisible(false)}
-                            style={[styles.modalCancelBtn, { backgroundColor: colors.surfaceAlt }]}
-                        >
-                            <Text style={[styles.modalCancelBtnText, { color: colors.text }]}>Cancel</Text>
-                        </TouchableOpacity>
-                    </Pressable>
-                </Pressable>
-            </Modal>
+           <CreatePlaylistModal
+    visible={createVisible}
+    onClose={() => setCreateVisible(false)}
+    onCreate={handleCreate}
+/>
             <ConfirmModal
                 visible={!!deleteTarget}
                 type="deletePlaylist"

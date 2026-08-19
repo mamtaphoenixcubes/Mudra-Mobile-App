@@ -288,11 +288,7 @@ useEffect(() => {
         const updateField = session.isVideo
             ? 'videos'
             : 'audios';
-console.log(
-    "contentTypeOfAudio:",
-    session.contentTypeOfAudio,
-    typeof session.contentTypeOfAudio
-);
+
         const requestBody = session.isVideo
             ? { videoDocumentIds: [session.id],contentTypeOfAudio:session.contentTypeOfAudio }
             : { audioDocumentIds: [session.id],contentTypeOfAudio:session.contentTypeOfAudio };

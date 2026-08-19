@@ -101,7 +101,7 @@ export default function SignUp() {
                         pathname: '/auth/verifyemail',
                         params: { email: email },
                     });
-                    setStatusModal({ visible: true, type: 'success', message: 'Account created successfully' });
+                    setStatusModal({ visible: true, type: 'success', message: 'Verify your email' });
                 } else {
                     const message = res?.data?.message || 'Registration failed';
                     //Alert.alert('Error', message);

@@ -46,10 +46,15 @@ const CATEGORIES: CategoryItem[] = [
 
 export default function PlaylistCategorySelect() {
     const { colors } = useTheme();
-    const { playlistId, playlistName } = useLocalSearchParams<{
-        playlistId: string;
-        playlistName?: string;
-    }>();
+  const {
+    playlistId,
+    playlistName,
+    playlistType,
+} = useLocalSearchParams<{
+    playlistId: string;
+    playlistName?: string;
+    playlistType: 'audio' | 'video';
+}>();
 
     const [activeCategory, setActiveCategory] = useState<CategoryItem['key'] | null>(null);
 
@@ -106,11 +111,13 @@ export default function PlaylistCategorySelect() {
                 onRequestClose={() => setActiveCategory(null)}
             >
                 {activeCategory && (
-                    <PlaylistAddItems
-                        playlistId={playlistId as string}
-                        category={activeCategory}
-                        onClose={() => setActiveCategory(null)}
-                    />
+             <PlaylistAddItems
+                    playlistId={playlistId as string}
+                    playlistType={playlistType || 'audio'}
+                    playlistName={playlistName}
+                    category={activeCategory}
+                    onClose={() => setActiveCategory(null)}
+                />
                 )}
             </Modal>
         </View>
