@@ -370,4 +370,67 @@ export const getPranayamaStyles = (colors: typeof lightColors) =>
             fontSize: moderateScale(11),
             color: colors.text,
         },
+
+                // ── Browse by Category ───────────────────────────────────────────────────
+        categoryCard: {
+            marginHorizontal: moderateScale(16),
+            borderRadius: moderateScale(16),
+            borderWidth: 1,
+            borderColor: 'rgba(0,0,0,0.05)',
+            overflow: 'hidden',
+        },
+        categoryRow: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            paddingHorizontal: moderateScale(14),
+            paddingVertical: moderateScale(14),
+            gap: moderateScale(12),
+        },
+        categoryRowBorder: {
+            borderBottomWidth: 1,
+        },
+        categoryIconWrap: {
+            width: moderateScale(48),
+            height: moderateScale(48),
+            borderRadius: moderateScale(23),
+            backgroundColor: '#FFFFFF',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+        },
+        categoryIcon: {
+            width: moderateScale(32),
+            height: moderateScale(32),
+        },
+        categoryIconFallback: {
+            width: moderateScale(30),
+            height: moderateScale(30),
+            borderRadius: moderateScale(13),
+            backgroundColor: 'rgba(155,143,232,0.2)',
+        },
+        categoryTextBlock: {
+            flex: 1,
+            gap: moderateScale(2),
+        },
+        categoryTitle: {
+            fontFamily: 'SF-Pro-Display',
+            fontSize: moderateScale(15),
+            fontWeight: '500',
+        },
+        categoryDesc: {
+            fontFamily: 'SF-Pro-Display',
+            fontSize: moderateScale(12),
+            lineHeight: moderateScale(16),
+        },
+        categoryRight: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: moderateScale(4),
+            flexShrink: 0,
+        },
+        practiceCount: {
+            fontFamily: 'SF-Pro-Display',
+            fontSize: moderateScale(12),
+            fontWeight: '500',
+        },
     });

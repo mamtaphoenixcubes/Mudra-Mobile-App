@@ -97,6 +97,8 @@ export default function RootLayout() {
 
               <Stack.Screen name="pranayama" options={{ headerShown: false }} />
               <Stack.Screen name="pranayamalist" options={{ headerShown: false }} />
+              <Stack.Screen name="pranayamadetail" options={{ headerShown: false }} />
+              <Stack.Screen name="pranayamaplayer" options={{ headerShown: false }} />
 
 
             </Stack>

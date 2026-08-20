@@ -1,0 +1,2 @@
+import PranayamaSessionPlayer from '@/components/pranayama/pranayamaplayer/PranayamaSessionPlayer'
+export default PranayamaSessionPlayer

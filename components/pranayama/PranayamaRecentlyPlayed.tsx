@@ -12,20 +12,20 @@ import { getPranayamaStyles } from '@/assets/styles/pranayama/pranayamaStyles';
 const RECENT_PRANAYAMAS = [
     {
         id: '1',
-        title: 'Surya Namaskar A',
-        meta: '20 min · Beginner',
+        title: 'Nadi Shodhana',
+        meta: '10 min · Beginner',
         image: require('@/assets/images/tabIcons/calm-mind.png'),
     },
     {
         id: '2',
-        title: 'Warrior Sequence',
-        meta: '25 min · Intermediate',
+        title: 'Kapalabhati',
+        meta: '8 min · Intermediate',
         image: require('@/assets/images/tabIcons/anxiety-release.png'),
     },
     {
         id: '3',
-        title: 'Yin Yoga Flow',
-        meta: '40 min · All Levels',
+        title: 'Sheetali Pranayama',
+        meta: '7 min · Beginner',
         image: require('@/assets/images/tabIcons/body-scan.png'),
     },
 ];

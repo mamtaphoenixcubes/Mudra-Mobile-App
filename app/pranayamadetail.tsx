@@ -1,0 +1,2 @@
+import PranayamaDetailScreen from '@/components/pranayama/pranayamadetail/PranayamaDetailScreen'
+export default PranayamaDetailScreen

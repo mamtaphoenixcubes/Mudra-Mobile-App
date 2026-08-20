@@ -10,6 +10,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/constants/ThemeContext';
 import { getPranayamaStyles } from '@/assets/styles/pranayama/pranayamaStyles';
 import { router } from 'expo-router';
+import PranayamaBrowseCategory from './PranayamaBrowseCategory';
 
 const CARD_COLORS = ['#FFF6BF', '#CBECFF', '#E9FFDB', '#FFDBE7', '#F3E8FF'];
 
@@ -115,23 +116,7 @@ export default function PranayamaRecommended() {
             </ScrollView>
 
             {/* Featured Card */}
-            <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>Today's Featured</Text>
-            </View>
-            <TouchableOpacity style={styles.featuredCard} activeOpacity={0.88} onPress={() => router.push('/pranayamadetail')}>
-                <Image
-                    source={require('@/assets/images/tabIcons/body-scan.png')}
-                    style={styles.featuredImage}
-                    resizeMode="cover"
-                />
-                <View style={styles.featuredOverlay}>
-                    <View style={styles.featuredBadge}>
-                        <Text style={styles.featuredBadgeText}>Advanced</Text>
-                    </View>
-                    <Text style={styles.featuredTitle}>Padmasana Flow</Text>
-                    <Text style={styles.featuredSubtitle}>30 min · Full body stretch</Text>
-                </View>
-            </TouchableOpacity>
+            <PranayamaBrowseCategory />
         </View>
     );
 }

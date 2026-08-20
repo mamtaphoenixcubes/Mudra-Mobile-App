@@ -10,6 +10,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/constants/ThemeContext';
 import { getAsanaStyles } from '@/assets/styles/asana/asanaStyles';
 import { router } from 'expo-router';
+import AsanaBrowseCategory from './AsanaBrowseCategory';
 
 const CARD_COLORS = ['#FFF6BF', '#CBECFF', '#E9FFDB', '#FFDBE7'];
 
@@ -61,7 +62,7 @@ export default function AsanaRecommended() {
             {/* Section Header */}
             <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>Recommended for You</Text>
-                <TouchableOpacity activeOpacity={0.7}  onPress={() => router.push('/asanalist')}>
+                <TouchableOpacity activeOpacity={0.7} onPress={() => router.push('/asanalist')}>
                     <Text style={styles.viewAll}>View All {'>'}</Text>
                 </TouchableOpacity>
             </View>
@@ -101,24 +102,8 @@ export default function AsanaRecommended() {
                 ))}
             </ScrollView>
 
-            {/* Featured Card */}
-            <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>Today's Featured</Text>
-            </View>
-            <TouchableOpacity style={styles.featuredCard} activeOpacity={0.88} onPress={() => router.push('/asanadetail')}>
-                <Image
-                    source={require('@/assets/images/tabIcons/body-scan.png')}
-                    style={styles.featuredImage}
-                    resizeMode="cover"
-                />
-                <View style={styles.featuredOverlay}>
-                    <View style={styles.featuredBadge}>
-                        <Text style={styles.featuredBadgeText}>Advanced</Text>
-                    </View>
-                    <Text style={styles.featuredTitle}>Padmasana Flow</Text>
-                    <Text style={styles.featuredSubtitle}>30 min · Full body stretch</Text>
-                </View>
-            </TouchableOpacity>
+            {/* Browse by Category */}
+            <AsanaBrowseCategory />
         </View>
     );
 }

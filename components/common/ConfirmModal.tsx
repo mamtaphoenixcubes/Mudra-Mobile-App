@@ -15,7 +15,7 @@ const moderateScale = (size: number, factor = 0.5) => {
     return size + (s - size) * factor;
 };
 
-type ModalType = 'notification' | 'logout' | 'delete' | 'deletePlaylist' | 'deleteSessions';
+type ModalType = 'notification' | 'logout' | 'delete' | 'deletePlaylist' | 'deleteSessions' | 'profileDetails';
 
 type Props = {
     visible: boolean;
@@ -79,6 +79,17 @@ const MODAL_CONFIG = {
         confirmColor: '#9A85FE',
         confirmTextColor: '#FFFFFF',
         cancelBg: '#F3F3F3',
+    },
+        profileDetails: {
+        image: require('@/assets/images/Pranayama_Images/UserProfile.png'),
+        imageStyle: { width: moderateScale(100), height: moderateScale(100), borderRadius: moderateScale(10) },
+        title: 'A Little About You',
+        body: 'Add a few basic details to your profile.',
+        confirmText: 'Add Details',
+        cancelText: 'Maybe Later',
+        confirmColor: '#9A85FE',
+        confirmTextColor: '#FFFFFF',
+        cancelBg: 'transparent',
     },
 };
 
