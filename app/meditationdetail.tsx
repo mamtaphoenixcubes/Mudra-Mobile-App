@@ -1,0 +1,2 @@
+import MeditationDetailScreen from '@/components/meditation/meditationdetail/MeditationDetailScreen'
+export default MeditationDetailScreen

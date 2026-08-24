@@ -1,0 +1,2 @@
+import MeditationSessionPlayer from '@/components/meditation/meditationplayer/MeditationSessionPlayer'
+export default MeditationSessionPlayer

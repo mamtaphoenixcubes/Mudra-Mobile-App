@@ -54,6 +54,7 @@ export default function SlideMenu({ visible, onClose }: SlideMenuProps) {
             { id: 'playlists', title: 'My Playlists', icon: 'list-outline', route: '/myplaylists' },
             { id: 'asana', title: 'Asana', icon: 'body-outline', route: '/asana' },
             { id: 'pranayama', title: 'Pranayama', icon: 'pulse-outline', route: '/pranayama' },
+            { id: 'meditation', title: 'Meditation', icon: 'leaf-outline', route: '/meditation' },
 
             //{ id: 'savedempty', title: 'Saved Empty', icon: 'heart-outline', route: '/savedempty' },
 

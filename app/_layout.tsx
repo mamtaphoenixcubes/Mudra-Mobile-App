@@ -100,6 +100,13 @@ export default function RootLayout() {
               <Stack.Screen name="pranayamadetail" options={{ headerShown: false }} />
               <Stack.Screen name="pranayamaplayer" options={{ headerShown: false }} />
 
+               <Stack.Screen name="meditation" options={{ headerShown: false }} />
+              <Stack.Screen name="meditationdetail" options={{ headerShown: false }} />
+              <Stack.Screen name="meditationplayer" options={{ headerShown: false }} />
+              <Stack.Screen name="meditationlist" options={{ headerShown: false }} />
+
+              <Stack.Screen name="contactus" options={{ headerShown: false }} />
+
 
             </Stack>
             <StatusBar style="auto" />

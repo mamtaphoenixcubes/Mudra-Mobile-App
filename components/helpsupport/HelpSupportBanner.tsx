@@ -29,7 +29,7 @@ export default function HelpSupportBanner() {
                         <Text style={styles.bannerSubtitle}>Our support team is here for you.</Text>
                     </View>
 
-                    <TouchableOpacity style={styles.bannerBtn} activeOpacity={0.8} onPress={() => router.push('/chat')}>
+                    <TouchableOpacity style={styles.bannerBtn} activeOpacity={0.8} onPress={() => router.push('/contactus')}>
                         <CommentWhiteSvg width={16} height={16} />
                         <Text style={styles.bannerBtnText}>Contact Support</Text>
                     </TouchableOpacity>
