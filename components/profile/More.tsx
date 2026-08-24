@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 import {
   View,
@@ -7,12 +7,14 @@ import {
   TouchableOpacity,
   ScrollView,
   Dimensions,
-  Alert,
 } from 'react-native';
+
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { Ionicons } from '@expo/vector-icons';
 
 import { router } from 'expo-router';
+
 import InfoCircleSvg from '@/assets/icons/info-circle.svg'
 import InfoCircleWhite from '@/assets/icons/info-circleWhite.svg'
 import HelpsupportSvg from '@/assets/icons/Helpsupport.svg'
@@ -21,17 +23,14 @@ import WarrantySvg from '@/assets/icons/Warranty.svg'
 import WarrantyWhite from '@/assets/icons/WarrantyWhite.svg'
 import FileSvg from '@/assets/icons/file.svg'
 import FileWhite from '@/assets/icons/fileWhite.svg'
-
-// AUTH STORE
-import { useAuthStore } from '@/store/authStore';
 import ConfirmModal from '@/components/common/ConfirmModal';
+import { useAuthStore } from '@/store/authStore';
 import { useTheme } from '@/constants/ThemeContext'
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
 const moderateScale = (size: number, factor = 0.5) =>
   size + ((SCREEN_WIDTH - 375) / 375) * size * factor;
-
-// ── Data ──────────────────────────────────────────────────────────────────────
 
 const MENU_ITEMS = [
   { id: 'about', label: 'About Mudras' },
@@ -40,106 +39,190 @@ const MENU_ITEMS = [
   { id: 'terms', label: 'Terms of Use' },
 ];
 
-// ── Component ─────────────────────────────────────────────────────────────────
-
 export default function More() {
-  const { colors, isDark } = useTheme();
-  const MENU_ICONS: Record<string, { light: any; dark: any }> = {
-    about: { light: InfoCircleSvg, dark: InfoCircleWhite },
-    help: { light: HelpsupportSvg, dark: HelpsupportWhite },
-    privacy: { light: WarrantySvg, dark: WarrantyWhite },
-    terms: { light: FileSvg, dark: FileWhite },
-  }
-  const MenuIcon = ({ id }: { id: string }) => {
-    const Icon = isDark ? MENU_ICONS[id]?.dark : MENU_ICONS[id]?.light
-    return Icon ? <Icon width={22} height={22} /> : null
-  }
 
-  // GET LOGOUT FUNCTION
+  const { colors, isDark } = useTheme();
+
+  /*
+  |--------------------------------------------------------------------------
+  | AUTH STORE
+  |--------------------------------------------------------------------------
+  */
+
   const logout = useAuthStore(
     (state) => state.logout
   );
+
+  const {
+    isLoggedIn,
+    token,
+    user,
+  } = useAuthStore();
+
+  const loggedIn =
+    isLoggedIn &&
+    !!token &&
+    !!user;
+
+  /*
+  |--------------------------------------------------------------------------
+  | MODALS
+  |--------------------------------------------------------------------------
+  */
+
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
 
-  const { isLoggedIn, token, user } = useAuthStore();
-  const loggedIn = isLoggedIn && !!token && !!user;
 
-  const handleLogin = () => {
+
+  /*
+  |--------------------------------------------------------------------------
+  | LOGIN
+  |--------------------------------------------------------------------------
+  */
+
+  const handleLogin = async () => {
+
+    /*
+     * Mark that the user is coming from More.
+     * After successful login, the profile check
+     * will run when More is displayed again.
+     */
+    await AsyncStorage.setItem(
+      'pendingProfileCheckSource',
+      'more'
+    );
+
     router.push('/auth/login');
   };
 
+  /*
+  |--------------------------------------------------------------------------
+  | MENU ICONS
+  |--------------------------------------------------------------------------
+  */
+
+  const MENU_ICONS: Record<
+    string,
+    { light: any; dark: any }
+  > = {
+
+    about: {
+      light: InfoCircleSvg,
+      dark: InfoCircleWhite
+    },
+
+    help: {
+      light: HelpsupportSvg,
+      dark: HelpsupportWhite
+    },
+
+    privacy: {
+      light: WarrantySvg,
+      dark: WarrantyWhite
+    },
+
+    terms: {
+      light: FileSvg,
+      dark: FileWhite
+    },
+
+  };
+
+  const MenuIcon = ({ id }: { id: string }) => {
+
+    const Icon =
+      isDark
+        ? MENU_ICONS[id]?.dark
+        : MENU_ICONS[id]?.light;
+
+    return Icon
+      ? <Icon width={22} height={22} />
+      : null;
+  };
+
+  /*
+  |--------------------------------------------------------------------------
+  | MENU NAVIGATION
+  |--------------------------------------------------------------------------
+  */
+
   const handlePress = (id: string) => {
+
     if (id === 'help') {
+
       router.push('/helpsupport');
+
     } else if (id === 'about') {
+
       router.push('/about');
+
     } else if (id === 'privacy') {
+
       router.push('/privacy');
+
     } else if (id === 'terms') {
+
       router.push('/terms');
+
     }
+
   };
 
-  // HANDLE LOGOUT
+  /*
+  |--------------------------------------------------------------------------
+  | LOGOUT
+  |--------------------------------------------------------------------------
+  */
+
   const handleLogout = () => {
-
     setShowLogoutModal(true);
-
-    // Alert.alert(
-    //   'Log Out',
-    //   'Are you sure you want to log out?',
-    //   [
-    //     {
-    //       text: 'Cancel',
-    //       style: 'cancel',
-    //     },
-
-    //     {
-    //       text: 'Log Out',
-
-    //       style: 'destructive',
-
-    //       onPress: async () => {
-
-    //         try {
-
-    //           // CLEAR AUTH
-    //           await logout();
-
-    //           // REDIRECT TO LOGIN
-    //           router.replace('/auth/login');
-
-    //         } catch (error) {
-
-    //           console.log(
-    //             'Logout Error:',
-    //             error
-    //           );
-
-    //         }
-
-    //       },
-    //     },
-    //   ]
-    // );
-
   };
+
+  /*
+  |--------------------------------------------------------------------------
+  | UI
+  |--------------------------------------------------------------------------
+  */
 
   return (
 
     <ScrollView
-      style={[styles.screen, { backgroundColor: colors.background }]}
+      style={[
+        styles.screen,
+        {
+          backgroundColor:
+            colors.background
+        }
+      ]}
       showsVerticalScrollIndicator={false}
       contentContainerStyle={styles.content}
     >
 
-      {/* ── Title ── */}
-      <Text style={[styles.pageTitle, { color: colors.text }]}>
+      {/* Title */}
+
+      <Text
+        style={[
+          styles.pageTitle,
+          {
+            color: colors.text
+          }
+        ]}
+      >
         More
       </Text>
 
-      {/* ── Menu Card ── */}
-      <View style={[styles.card, { backgroundColor: colors.card }]}>
+      {/* Menu Card */}
+
+      <View
+        style={[
+          styles.card,
+          {
+            backgroundColor:
+              colors.card
+          }
+        ]}
+      >
 
         {MENU_ITEMS.map(
           (item, index) => {
@@ -153,19 +236,32 @@ export default function More() {
               <View key={item.id}>
 
                 <TouchableOpacity
-                  style={[styles.row, { backgroundColor: colors.card }]}
+                  style={[
+                    styles.row,
+                    {
+                      backgroundColor:
+                        colors.card
+                    }
+                  ]}
                   activeOpacity={0.6}
                   onPress={() =>
                     handlePress(item.id)
                   }
                 >
 
-                  {/* Icon */}
                   <View style={styles.iconWrap}>
                     <MenuIcon id={item.id} />
                   </View>
 
-                  <Text style={[styles.rowLabel, { color: colors.text }]}>
+                  <Text
+                    style={[
+                      styles.rowLabel,
+                      {
+                        color:
+                          colors.text
+                      }
+                    ]}
+                  >
                     {item.label}
                   </Text>
 
@@ -178,7 +274,17 @@ export default function More() {
                 </TouchableOpacity>
 
                 {!isLast && (
-                  <View style={[styles.divider, { backgroundColor: colors.dividerDark }]} />
+
+                  <View
+                    style={[
+                      styles.divider,
+                      {
+                        backgroundColor:
+                          colors.dividerDark
+                      }
+                    ]}
+                  />
+
                 )}
 
               </View>
@@ -190,43 +296,72 @@ export default function More() {
 
       </View>
 
-      {/* ── Log Out Button ── */}
+      {/* Login / Logout */}
+
       <TouchableOpacity
         style={styles.logoutBtn}
         activeOpacity={0.85}
-        //onPress={handleLogout}
-        onPress={loggedIn ? handleLogout : handleLogin}
+        onPress={
+          loggedIn
+            ? handleLogout
+            : handleLogin
+        }
       >
 
         <Ionicons
-          //name="log-out-outline"
-          name={loggedIn ? 'log-out-outline' : 'log-in-outline'}
+          name={
+            loggedIn
+              ? 'log-out-outline'
+              : 'log-in-outline'
+          }
           size={moderateScale(22)}
           color="#FFFFFF"
           style={styles.logoutIcon}
         />
 
         <Text style={styles.logoutText}>
-          {loggedIn ? 'Log Out' : 'Log In'}
+          {loggedIn
+            ? 'Log Out'
+            : 'Log In'}
         </Text>
 
       </TouchableOpacity>
+
+      {/* Logout Modal */}
 
       <ConfirmModal
         visible={showLogoutModal}
         type="logout"
         onConfirm={async () => {
+
           setShowLogoutModal(false);
+
           try {
+
             await logout();
-            router.replace('/auth/login');
+
+            router.replace(
+              '/auth/login'
+            );
+
           } catch (error) {
-            console.log('Logout Error:', error);
+
+            console.log(
+              'Logout Error:',
+              error
+            );
+
           }
+
         }}
-        onCancel={() => setShowLogoutModal(false)}
+        onCancel={() =>
+          setShowLogoutModal(false)
+        }
       />
 
+      {/* Profile Completion Modal */}
+
+  
 
     </ScrollView>
 

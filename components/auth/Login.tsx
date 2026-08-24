@@ -11,7 +11,7 @@ import {
     Alert,
     ActivityIndicator,
 } from 'react-native';
-
+import ConfirmModal from '@/components/common/ConfirmModal';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -49,7 +49,7 @@ export default function Login() {
     const [rememberMe, setRememberMe] = useState(false);
 
     const [showPassword, setShowPassword] = useState(false);
-
+const [showProfileModal, setShowProfileModal] = useState(false);
     const [emailFocused, setEmailFocused] = useState(false);
     const [passwordFocused, setPasswordFocused] = useState(false);
     const { colors } = useTheme();
@@ -64,7 +64,37 @@ export default function Login() {
 
     const [pendingRedirect, setPendingRedirect] = useState<any>(null);
     const [loading, setLoading] = useState(false);
+const getProfileCompletionStatus = (profileUser: any) => {
+    const rawCompletionPercentage = Number(
+        profileUser?.profileCompletionPercentage ??
+        profileUser?.profile_completion_percentage ??
+        profileUser?.profile?.profileCompletionPercentage ??
+        profileUser?.profile?.completionPercentage ??
+        0
+    );
 
+    const rawProfileComplete =
+        profileUser?.profileComplete ??
+        profileUser?.profile_complete ??
+        profileUser?.profile?.profileComplete ??
+        profileUser?.profile?.complete ??
+        rawCompletionPercentage >= 100;
+
+    const profileComplete =
+        typeof rawProfileComplete === 'string'
+            ? ['true', '1', 'yes'].includes(
+                rawProfileComplete.toLowerCase()
+            )
+            : Boolean(rawProfileComplete);
+
+    return {
+        profileComplete,
+        profileCompletionPercentage:
+            Number.isFinite(rawCompletionPercentage)
+                ? rawCompletionPercentage
+                : 0,
+    };
+};
     const handleLogin = async () => {
 
         if (!email || !password) {
@@ -114,7 +144,14 @@ export default function Login() {
                     user: userData,
                     token: authToken,
                 });
+const {
+    profileCompletionPercentage,
+    profileComplete,
+} = getProfileCompletionStatus(userData);
 
+const profileIncomplete =
+    profileCompletionPercentage < 100 ||
+    !profileComplete;
                 // AUTO SAVE MUDRA AFTER LOGIN
                 if (
                     action === 'save' &&
@@ -192,7 +229,11 @@ export default function Login() {
 
                 // }
                 setPendingRedirect({ pathname: redirectPath ?? '/(tabs)', params: redirectParams });
-
+setPendingRedirect({
+    pathname: redirectPath ?? '/(tabs)',
+    params: redirectParams,
+    profileIncomplete,
+});
 
             } else {
 
@@ -546,19 +587,69 @@ export default function Login() {
                 </View>
 
             </ScrollView>
-            <StatusModal
-                visible={statusModal.visible}
-                type={statusModal.type}
-                title={statusModal.title}
-                message={statusModal.message}
-                onClose={() => {
-                    setStatusModal((prev) => ({ ...prev, visible: false }));
-                    if (statusModal.type === 'success' && pendingRedirect) {
-                        router.replace(pendingRedirect);
-                        setPendingRedirect(null);
-                    }
-                }}
-            />
+        <StatusModal
+    visible={statusModal.visible}
+    type={statusModal.type}
+    title={statusModal.title}
+    message={statusModal.message}
+    onClose={() => {
+
+        setStatusModal((prev) => ({
+            ...prev,
+            visible: false,
+        }));
+
+        if (
+            statusModal.type === 'success' &&
+            pendingRedirect
+        ) {
+
+            if (pendingRedirect.profileIncomplete) {
+
+                // Profile is incomplete.
+                // Show ConfirmModal AFTER StatusModal closes.
+                setShowProfileModal(true);
+
+            } else {
+
+                // Profile is complete.
+                // Navigate normally.
+                router.replace({
+                    pathname: pendingRedirect.pathname,
+                    params: pendingRedirect.params,
+                });
+
+                setPendingRedirect(null);
+            }
+        }
+    }}
+/>
+
+<ConfirmModal
+    visible={showProfileModal}
+    type="profileDetails"
+    onConfirm={() => {
+
+        setShowProfileModal(false);
+
+        router.push('/editprofile');
+
+        setPendingRedirect(null);
+    }}
+    onCancel={() => {
+
+        setShowProfileModal(false);
+
+        if (pendingRedirect) {
+            router.replace({
+                pathname: pendingRedirect.pathname,
+                params: pendingRedirect.params,
+            });
+
+            setPendingRedirect(null);
+        }
+    }}
+/>
 
         </KeyboardAvoidingView>
     );

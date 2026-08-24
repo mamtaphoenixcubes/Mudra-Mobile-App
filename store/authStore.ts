@@ -87,8 +87,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   updateUser: async (partialUser) => {
     try {
-      const currentUser = get().user;
-      const mergedUser = { ...currentUser, ...partialUser };
+      const currentUser = get().user ?? {};
+      const responseUser =
+        partialUser && typeof partialUser === 'object' && 'data' in partialUser && partialUser.data && typeof partialUser.data === 'object'
+          ? partialUser.data
+          : partialUser && typeof partialUser === 'object' && 'user' in partialUser && partialUser.user && typeof partialUser.user === 'object'
+            ? partialUser.user
+            : partialUser;
+
+      const mergedUser = { ...currentUser, ...(responseUser ?? {}) };
 
       const authData = {
         user: mergedUser,

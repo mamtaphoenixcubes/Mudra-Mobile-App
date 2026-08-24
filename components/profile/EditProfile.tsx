@@ -39,7 +39,7 @@ export default function EditProfile() {
     // ── Basic fields ──
     const [fullName, setFullName] = useState(user?.fullName ?? '');
     const [username, setUsername] = useState(user?.username ?? '');
-    const [phoneNumber, setPhoneNumber] = useState(user?.phoneNumber ?? '');
+    const [phoneNumber, setPhoneNumber] = useState(user?.phone ?? '');
     const [email, setEmail] = useState(user?.email ?? '');
 
     // ── New profile fields (per updated API contract) ──
@@ -222,13 +222,14 @@ export default function EditProfile() {
                 headers: { Authorization: `Bearer ${token}` },
             });
             if (res?.data?.success !== false) {
-                const { profileImage: _profileImageId, ...storablePayload } = payload;
+                const responseUser =
+                    res?.data?.data?.user ??
+                    res?.data?.data ??
+                    res?.data?.user ??
+                    res?.data ??
+                    {};
 
-                await updateUser({
-                    ...storablePayload,
-                    email,
-                    ...(photoChanged ? { profileImage: { url: photoUri } } : {}),
-                });
+                await updateUser(responseUser);
                 setPhotoChanged(false);
                 Alert.alert('Success', 'Profile updated', [
                     { text: 'OK', onPress: () => router.back() },

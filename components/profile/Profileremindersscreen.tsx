@@ -11,6 +11,7 @@ import {
   Platform
 } from 'react-native';
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 
 import { useRouter } from 'expo-router';
@@ -20,6 +21,7 @@ import { useTheme } from '@/constants/ThemeContext';
 import { useReminderStore } from '@/store/reminderStore';
 import { renderReminderIcon, REMINDER_ICON_OPTIONS } from '@/constants/reminderIcons';
 import AddReminderModal from '@/components/common/AddReminderModal';
+import ConfirmModal from '@/components/common/ConfirmModal';
 
 export default function ProfileRemindersScreen() {
   const { colors } = useTheme()
@@ -34,6 +36,34 @@ export default function ProfileRemindersScreen() {
   const reminders = useReminderStore((s) => s.reminders);
   const setReminderEnabled = useReminderStore((s) => s.setReminderEnabled);
   const [addModalVisible, setAddModalVisible] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+
+  const getProfileCompletionStatus = (profileUser: any) => {
+    const rawCompletionPercentage = Number(
+      profileUser?.profileCompletionPercentage ??
+      profileUser?.profile_completion_percentage ??
+      profileUser?.profile?.profileCompletionPercentage ??
+      profileUser?.profile?.completionPercentage ??
+      0
+    );
+
+    const rawProfileComplete =
+      profileUser?.profileComplete ??
+      profileUser?.profile_complete ??
+      profileUser?.profile?.profileComplete ??
+      profileUser?.profile?.complete ??
+      rawCompletionPercentage >= 100;
+
+    const profileComplete =
+      typeof rawProfileComplete === 'string'
+        ? ['true', '1', 'yes'].includes(rawProfileComplete.toLowerCase())
+        : Boolean(rawProfileComplete);
+
+    return {
+      profileComplete,
+      profileCompletionPercentage: Number.isFinite(rawCompletionPercentage) ? rawCompletionPercentage : 0,
+    };
+  };
 
   // function formatSchedule(hour: number, minute: number, repeat: 'daily' | 'weekdays' | 'weekends') {
   //   const period = hour >= 12 ? 'PM' : 'AM';
@@ -100,6 +130,7 @@ export default function ProfileRemindersScreen() {
     !!user;
 
   const fetchReminders = useReminderStore((s) => s.fetchReminders);
+console.log(user,"dwad");
 
   useEffect(() => {
     if (loggedIn && user?.id) {
@@ -107,7 +138,7 @@ export default function ProfileRemindersScreen() {
     } else {
       useReminderStore.setState({ reminders: [] });
     }
-  }, [loggedIn, user?.id]);
+  }, [loggedIn, user?.id, fetchReminders]);
 
   /*
   |--------------------------------------------------------------------------
@@ -115,13 +146,47 @@ export default function ProfileRemindersScreen() {
   |--------------------------------------------------------------------------
   */
 
-  const handleLogin = () => {
-
+  const handleLogin = async () => {
+    await AsyncStorage.setItem('pendingProfileCheckSource', 'profileReminders');
     router.push('/auth/login');
-
   };
 
+  useEffect(() => {
+    let isMounted = true;
 
+    const runProfileCheck = async () => {
+      try {
+        const source = await AsyncStorage.getItem('pendingProfileCheckSource');
+
+        if (source !== 'profileReminders' || !user) {
+          return;
+        }
+
+        const { profileCompletionPercentage, profileComplete } = getProfileCompletionStatus(user);
+
+        if (profileCompletionPercentage >= 100 && profileComplete) {
+          await AsyncStorage.removeItem('pendingProfileCheckSource');
+          return;
+        }
+
+        if (isMounted) {
+          setShowProfileModal(true);
+        }
+
+        await AsyncStorage.removeItem('pendingProfileCheckSource');
+      } catch (error) {
+        console.log('Profile completion check error:', error);
+      }
+    };
+
+    if (loggedIn) {
+      runProfileCheck();
+    }
+
+    return () => {
+      isMounted = false;
+    };
+  }, [loggedIn, user]);
 
   return (
 
