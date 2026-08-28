@@ -10,7 +10,7 @@ import {
   Switch,
   Platform
 } from 'react-native';
-
+import Svg, { Circle } from 'react-native-svg'
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -130,7 +130,6 @@ export default function ProfileRemindersScreen() {
     !!user;
 
   const fetchReminders = useReminderStore((s) => s.fetchReminders);
-console.log(user,"dwad");
 
   useEffect(() => {
     if (loggedIn && user?.id) {
@@ -139,17 +138,32 @@ console.log(user,"dwad");
       useReminderStore.setState({ reminders: [] });
     }
   }, [loggedIn, user?.id, fetchReminders]);
+const profileCompletionPercentage = Math.min(
+  100,
+  Math.max(
+    0,
+    Number(user?.profileCompletionPercentage ?? 0)
+  )
+)
 
+const showProfileProgress =
+  loggedIn &&
+  user?.profileComplete !== true &&
+  profileCompletionPercentage < 100
   /*
   |--------------------------------------------------------------------------
   | HANDLE LOGIN
   |--------------------------------------------------------------------------
   */
 
-  const handleLogin = async () => {
-    await AsyncStorage.setItem('pendingProfileCheckSource', 'profileReminders');
-    router.push('/auth/login');
-  };
+const handleLogin = () => {
+    router.push({
+        pathname: '/auth/login',
+        params: {
+            profileCheckSource: 'profileReminders',
+        },
+    });
+};
 
   useEffect(() => {
     let isMounted = true;
@@ -187,7 +201,15 @@ console.log(user,"dwad");
       isMounted = false;
     };
   }, [loggedIn, user]);
-
+const profileImageUri =
+  user?.authProvider === 'google' && user?.googleProfileImage
+    ? user.googleProfileImage
+    : user?.profileImage?.url
+      ? user.profileImage.url.startsWith('http://') ||
+        user.profileImage.url.startsWith('https://')
+        ? user.profileImage.url
+        : `${process.env.EXPO_PUBLIC_IMAGE_API_URL}${user.profileImage.url}`
+      : null;
   return (
 
     <ScrollView
@@ -197,24 +219,67 @@ console.log(user,"dwad");
 
       {/* ── Profile Card ── */}
       <View style={styles.profileCard}>
+       {/* Avatar */}
+       {/* Avatar */}
+<View style={styles.avatarProgressWrapper}>
+  {showProfileProgress && (
+    <Svg
+      width={68}
+      height={68}
+      viewBox="0 0 68 68"
+      style={styles.progressCircle}
+    >
+      {/* Background circle */}
+      <Circle
+        cx="34"
+        cy="34"
+        r="31"
+        stroke="#E5E7EB"
+        strokeWidth="4"
+        fill="none"
+      />
 
-        {/* Avatar */}
-        <View style={styles.avatarWrapper}>
+      {/* Progress circle */}
+      <Circle
+        cx="34"
+        cy="34"
+        r="31"
+        stroke="#7B61FF"
+        strokeWidth="4"
+        fill="none"
+        strokeLinecap="round"
+        strokeDasharray={`${2 * Math.PI * 31}`}
+        strokeDashoffset={
+          2 * Math.PI * 31 * (1 - profileCompletionPercentage / 100)
+        }
+        transform="rotate(-90 34 34)"
+      />
+    </Svg>
+  )}
 
-          <Image
-            source={
-              user?.profileImage?.url
-                ? {
-                  uri: user.profileImage.url.startsWith('http')
-                    ? user.profileImage.url
-                    : `${process.env.EXPO_PUBLIC_IMAGE_API_URL}${user.profileImage.url}`,
-                }
-                : require('../../assets/images/tabIcons/profile-avatar.png')
-            }
-            style={user?.profileImage?.url ? styles.avatarImage : styles.avatarImagePlaceholder}
-          />
+  <View style={styles.avatarWrapper}>
+    <Image
+      source={
+        profileImageUri
+          ? { uri: profileImageUri }
+          : require('../../assets/images/tabIcons/profile-avatar.png')
+      }
+      style={
+        profileImageUri
+          ? styles.avatarImage
+          : styles.avatarImagePlaceholder
+      }
+    />
+  </View>
 
-        </View>
+  {showProfileProgress && (
+    <View style={styles.percentageBadge}>
+      <Text style={styles.percentageText}>
+        {profileCompletionPercentage}%
+      </Text>
+    </View>
+  )}
+</View>
 
         {/* USER INFO */}
         <View style={styles.profileInfo}>
@@ -673,5 +738,38 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#1A1A1A',
   },
+avatarProgressWrapper: {
+  width: 68,
+  height: 68,
+  alignItems: 'center',
+  justifyContent: 'center',
+  position: 'relative',
+},
 
+progressCircle: {
+  position: 'absolute',
+  top: 0,
+  left: 0,
+},
+
+percentageBadge: {
+  position: 'absolute',
+  bottom: -2,
+  right: -4,
+  minWidth: 25,
+  height: 18,
+  paddingHorizontal: 4,
+  borderRadius: 9,
+  backgroundColor: '#7B61FF',
+  alignItems: 'center',
+  justifyContent: 'center',
+  borderWidth: 2,
+  borderColor: '#EDE9FE',
+},
+
+percentageText: {
+  color: '#FFFFFF',
+  fontSize: 8,
+  fontWeight: '700',
+},
 });

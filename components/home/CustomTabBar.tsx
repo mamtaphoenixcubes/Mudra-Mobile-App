@@ -1,5 +1,13 @@
 import React from 'react'
-import { View, TouchableOpacity, Text, StyleSheet, Dimensions, Image } from 'react-native'
+import {
+  View,
+  TouchableOpacity,
+  Text,
+  StyleSheet,
+  Dimensions,
+  Image,
+  Animated,
+} from 'react-native'
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs'
 import HomeSvg from '@/assets/icons/Home.svg'
 import LibrarySvg from '@/assets/icons/Library.svg'
@@ -33,7 +41,41 @@ const ICON_SIZE = moderateScale(24)
 
 export default function CustomTabBar({ state, navigation }: BottomTabBarProps) {
 
-  const user = useAuthStore((s) => s.user)
+ const user = useAuthStore((s) => s.user)
+
+const profileIncomplete =
+  user?.profileComplete !== true &&
+  Number(user?.profileCompletionPercentage ?? 0) < 100
+
+const blinkAnim = React.useRef(new Animated.Value(1)).current
+
+React.useEffect(() => {
+  if (!profileIncomplete) {
+    blinkAnim.setValue(1)
+    return
+  }
+
+  const animation = Animated.loop(
+    Animated.sequence([
+      Animated.timing(blinkAnim, {
+        toValue: 0.2,
+        duration: 600,
+        useNativeDriver: true,
+      }),
+      Animated.timing(blinkAnim, {
+        toValue: 1,
+        duration: 600,
+        useNativeDriver: true,
+      }),
+    ])
+  )
+
+  animation.start()
+
+  return () => {
+    animation.stop()
+  }
+}, [profileIncomplete])
 
   const profileImageUri = user?.profileImage?.url
     ? (user.profileImage.url.startsWith('http')
@@ -65,26 +107,39 @@ export default function CustomTabBar({ state, navigation }: BottomTabBarProps) {
             style={styles.tab}
             activeOpacity={0.7}
           >
-            {route.name === 'profile' && profileImageUri ? (
-              <Image
-                source={{ uri: profileImageUri }}
-                style={{
-                  width: ICON_SIZE,
-                  height: ICON_SIZE,
-                  borderRadius: ICON_SIZE / 2,
-                  opacity: isFocused ? 1 : 0.5,
-                  borderWidth: isFocused ? 1.5 : 0,
-                  borderColor: '#FFFFFF',
-                }}
-              />
-            ) : (
-              <Icon
-                width={route.name === 'practice' ? moderateScale(30) : ICON_SIZE}
-                height={route.name === 'practice' ? moderateScale(30) : ICON_SIZE}
-                color="#FFFFFF"
-                opacity={isFocused ? 1 : 0.5}
-              />
-            )}
+          <View style={styles.profileIconContainer}>
+  {route.name === 'profile' && profileImageUri ? (
+    <Image
+      source={{ uri: profileImageUri }}
+      style={{
+        width: ICON_SIZE,
+        height: ICON_SIZE,
+        borderRadius: ICON_SIZE / 2,
+        opacity: isFocused ? 1 : 0.5,
+        borderWidth: isFocused ? 1.5 : 0,
+        borderColor: '#FFFFFF',
+      }}
+    />
+  ) : (
+    <Icon
+      width={route.name === 'practice' ? moderateScale(30) : ICON_SIZE}
+      height={route.name === 'practice' ? moderateScale(30) : ICON_SIZE}
+      color="#FFFFFF"
+      opacity={isFocused ? 1 : 0.5}
+    />
+  )}
+
+  {route.name === 'profile' && profileIncomplete && (
+    <Animated.View
+      style={[
+        styles.profileIncompleteIndicator,
+        {
+          opacity: blinkAnim,
+        },
+      ]}
+    />
+  )}
+</View>
             <Text style={[styles.label, { opacity: isFocused ? 1 : 0.5 }]}>
               {label}
             </Text>
@@ -136,4 +191,23 @@ const styles = StyleSheet.create({
     borderRadius: moderateScale(2),
     backgroundColor: '#FFFFFF',
   },
+  profileIconContainer: {
+  position: 'relative',
+  width: ICON_SIZE,
+  height: ICON_SIZE,
+  alignItems: 'center',
+  justifyContent: 'center',
+},
+
+profileIncompleteIndicator: {
+  position: 'absolute',
+  top: moderateScale(-3),
+  right: moderateScale(-3),
+  width: moderateScale(8),
+  height: moderateScale(8),
+  borderRadius: moderateScale(4),
+  backgroundColor: '#FF3B30',
+  borderWidth: 1.5,
+  borderColor: '#9A85FE',
+},
 })

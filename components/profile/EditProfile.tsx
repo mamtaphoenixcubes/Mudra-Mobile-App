@@ -72,16 +72,42 @@ export default function EditProfile() {
     const [showDobPicker, setShowDobPicker] = useState(false);
 
     // ── Photo ──
-    const [photoUri, setPhotoUri] = useState<string | null>(() => {
-        const rawUrl = user?.profileImage?.url ?? user?.avatar?.url ?? null;
-        if (!rawUrl) return null;
+const [photoUri, setPhotoUri] = useState<string | null>(() => {
+    let rawUrl = null;
 
-        if (rawUrl.startsWith('http') || rawUrl.startsWith('file://')) {
-            return rawUrl;
-        }
+    // Google profile image has priority
+    if (
+        user?.authProvider === 'google' &&
+        user?.googleProfileImage
+    ) {
+        rawUrl = user.googleProfileImage;
+    }
 
-        return `${process.env.EXPO_PUBLIC_IMAGE_API_URL}${rawUrl}`;
-    });
+    // Otherwise use Strapi profile image
+    else if (user?.profileImage?.url) {
+        rawUrl = user.profileImage.url;
+    }
+
+    if (!rawUrl) {
+        return null;
+    }
+
+    // Complete URL
+    if (
+        rawUrl.startsWith('http://') ||
+        rawUrl.startsWith('https://') ||
+        rawUrl.startsWith('file://')
+    ) {
+        return rawUrl;
+    }
+
+    // Strapi/local image
+    return `${process.env.EXPO_PUBLIC_IMAGE_API_URL}${rawUrl}`;
+});
+const displayPhotoUri = photoUri
+    ? `${photoUri}${photoUri.includes('?') ? '&' : '?'}cacheBust=${Date.now()}`
+    : null;
+console.log(photoUri,"photoUriphotoUriphotoUriphotoUriphotoUri");
 
     const [photoChanged, setPhotoChanged] = useState(false);
 
@@ -190,25 +216,16 @@ export default function EditProfile() {
                     setUploadingPhoto(false);
                 }
             }
-
             const url = `${process.env.EXPO_PUBLIC_API_URL}/users/update/${user?.documentId ?? user?.id}`;
-
-            console.log('UPDATE_URL:', url);
-            console.log('UPDATE_USER_OBJECT:', JSON.stringify(user, null, 2));
-
             const payload: Record<string, any> = {
                 username,
                 fullName,
                 phoneNumber,
-
                 gender,
                 dob,
-
                 bio,
-
                 country,
                 language,
-
                 SessionHistory: sessionHistory,
                 PersonalizedRecommendation: personalizedRecommendation,
                 MarketingEmail: marketingEmail,
@@ -270,20 +287,24 @@ export default function EditProfile() {
                 {/* Profile Photo */}
                 <View style={styles.avatarSection}>
                     <TouchableOpacity onPress={handlePickPhoto} activeOpacity={0.8} disabled={uploadingPhoto}>
-                        <View style={styles.avatarWrapper}>
-                            {uploadingPhoto ? (
-                                <ActivityIndicator color={colors.primary} />
-                            ) : photoUri ? (
-                                <Image
-                                    key={photoUri}
-                                    source={{ uri: photoUri }}
-                                    style={styles.avatarImage}
-                                    resizeMode="cover"
-                                />
-                            ) : (
-                                <Ionicons name="person" size={moderateScale(40)} color={colors.primary} />
-                            )}
-                        </View>
+                      <View style={styles.avatarWrapper}>
+    {uploadingPhoto ? (
+        <ActivityIndicator color={colors.primary} />
+    ) : displayPhotoUri ? (
+        <Image
+            key={displayPhotoUri}
+            source={{ uri: displayPhotoUri }}
+            style={styles.avatarImage}
+            resizeMode="cover"
+        />
+    ) : (
+        <Ionicons
+            name="person"
+            size={moderateScale(40)}
+            color={colors.primary}
+        />
+    )}
+</View>
 
                         <View style={styles.avatarEditBadge}>
                             <Ionicons name="camera" size={moderateScale(14)} color="#FFFFFF" />

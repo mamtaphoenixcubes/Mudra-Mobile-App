@@ -10,7 +10,10 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.mudra.app"
+      "bundleIdentifier": "com.mudra.app",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "package": "com.mudra.app",
@@ -45,7 +48,8 @@
       "expo-sqlite",
       "expo-web-browser",
       "expo-localization",
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      "@react-native-google-signin/google-signin"
     ],
     "experiments": {
       "typedRoutes": true,

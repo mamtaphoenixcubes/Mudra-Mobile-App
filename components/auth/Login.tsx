@@ -15,8 +15,8 @@ import ConfirmModal from '@/components/common/ConfirmModal';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-
-
+import {signInWithGoogle,} from '@/services/googleAuth';
+import {googleLogin,} from '@/services/authApi';
 import axios from 'axios';
 
 import { authStyles, AUTH_COLORS } from '@/assets/styles/auth/authStyles';
@@ -35,12 +35,13 @@ import StatusModal from '@/components/common/StatusModal';
 
 export default function Login() {
 
-    const {
-        redirect,
-        id,
-        action,
-        mudraId,
-    } = useLocalSearchParams();
+ const {
+    redirect,
+    id,
+    action,
+    mudraId,
+    profileCheckSource,
+} = useLocalSearchParams();
 
     const { setAuth } = useAuthStore();
 
@@ -49,7 +50,8 @@ export default function Login() {
     const [rememberMe, setRememberMe] = useState(false);
 
     const [showPassword, setShowPassword] = useState(false);
-const [showProfileModal, setShowProfileModal] = useState(false);
+    const [showProfileModal, setShowProfileModal] = useState(false);
+    
     const [emailFocused, setEmailFocused] = useState(false);
     const [passwordFocused, setPasswordFocused] = useState(false);
     const { colors } = useTheme();
@@ -61,7 +63,9 @@ const [showProfileModal, setShowProfileModal] = useState(false);
         title: string;
         message: string;
     }>({ visible: false, type: 'success', title: '', message: '' });
-
+const shouldShowProfileModal =
+    profileCheckSource === 'profileReminders' ||
+    profileCheckSource === 'more';
     const [pendingRedirect, setPendingRedirect] = useState<any>(null);
     const [loading, setLoading] = useState(false);
 const getProfileCompletionStatus = (profileUser: any) => {
@@ -233,6 +237,7 @@ setPendingRedirect({
     pathname: redirectPath ?? '/(tabs)',
     params: redirectParams,
     profileIncomplete,
+    shouldShowProfileModal,
 });
 
             } else {
@@ -271,9 +276,291 @@ setPendingRedirect({
         }
     };
 
-    const handleGoogleLogin = () => {
-        console.log('Continue with Google');
-    };
+  const handleGoogleLogin = async () => {
+
+    if (loading) {
+        return;
+    }
+
+    setLoading(true);
+
+    try {
+
+        //--------------------------------------------------
+        // 1. OPEN GOOGLE SIGN IN
+        //--------------------------------------------------
+
+        const googleResult =
+            await signInWithGoogle();
+
+
+        //--------------------------------------------------
+        // GOOGLE SIGN IN FAILED / CANCELLED
+        //--------------------------------------------------
+
+        if (!googleResult.success) {
+
+            if (googleResult.cancelled) {
+                return;
+            }
+
+            throw new Error(
+                googleResult.message ||
+                'Google sign in failed'
+            );
+        }
+
+
+        //--------------------------------------------------
+        // 2. GET GOOGLE ID TOKEN
+        //--------------------------------------------------
+
+        const idToken =
+            googleResult.idToken;
+
+
+        if (!idToken) {
+
+            throw new Error(
+                'Google ID token was not returned'
+            );
+
+        }
+
+
+        console.log(
+            'Google ID token received'
+        );
+
+        //--------------------------------------------------
+        // 3. SEND GOOGLE TOKEN TO NODE.JS
+        //--------------------------------------------------
+
+        const result =
+            await googleLogin(
+                idToken
+            );
+
+
+        console.log(
+            'GOOGLE LOGIN RESPONSE:',
+            result
+        );
+
+
+        //--------------------------------------------------
+        // 4. CHECK NODE RESPONSE
+        //--------------------------------------------------
+
+        if (!result?.success) {
+
+            throw new Error(
+                result?.message ||
+                'Google login failed'
+            );
+
+        }
+
+
+        //--------------------------------------------------
+        // 5. GET USER DATA
+        //--------------------------------------------------
+
+        const userData =
+            result?.data?.user ||
+            result?.user;
+
+
+        console.log(
+            'GOOGLE USER:',
+            userData
+        );
+
+
+        //--------------------------------------------------
+        // 6. GET REFRESH TOKEN
+        //--------------------------------------------------
+
+        const authToken =
+            result?.data?.refreshToken ||
+            result?.refreshToken;
+
+
+        if (!authToken) {
+
+            throw new Error(
+                'Authentication token was not returned'
+            );
+
+        }
+
+
+        //--------------------------------------------------
+        // 7. SAVE AUTH STATE
+        //--------------------------------------------------
+
+        await setAuth({
+            user: userData,
+            token: authToken,
+        });
+
+
+        //--------------------------------------------------
+        // 8. PROFILE COMPLETION
+        //--------------------------------------------------
+
+        const {
+            profileCompletionPercentage,
+            profileComplete,
+        } =
+            getProfileCompletionStatus(
+                userData
+            );
+
+
+        const profileIncomplete =
+            profileCompletionPercentage < 100 ||
+            !profileComplete;
+
+
+        //--------------------------------------------------
+        // 9. AUTO SAVE MUDRA AFTER GOOGLE LOGIN
+        //--------------------------------------------------
+
+        if (
+            action === 'save' &&
+            mudraId
+        ) {
+
+            try {
+
+                const profileDocumentId =
+                    userData?.profileDocumentId ||
+                    userData?.id;
+
+
+                await axios.post(
+                    `${process.env.EXPO_PUBLIC_API_URL}/mudras/${mudraId}/save`,
+                    {
+                        profileDocumentId,
+                    },
+                    {
+                        headers: {
+                            Authorization:
+                                `Bearer ${authToken}`,
+                        },
+                    }
+                );
+
+
+                console.log(
+                    'Mudra saved after Google login'
+                );
+
+            } catch (error: any) {
+
+                console.log(
+                    'GOOGLE_AUTO_SAVE_ERROR',
+                    error?.response?.data ||
+                    error
+                );
+
+            }
+
+        }
+
+
+        //--------------------------------------------------
+        // 10. SUCCESS MESSAGE
+        //--------------------------------------------------
+
+        setStatusModal({
+            visible: true,
+            type: 'success',
+            title: 'Success',
+            message: 'Login successful',
+        });
+
+
+        //--------------------------------------------------
+        // 11. REDIRECT
+        //--------------------------------------------------
+
+        const redirectPath =
+            typeof redirect === 'string' &&
+            redirect.length > 0
+                ? redirect
+                : null;
+
+
+        const redirectParams: Record<
+            string,
+            string
+        > = {};
+
+
+        if (
+            redirectPath &&
+            id
+        ) {
+
+            redirectParams.id =
+                String(id);
+
+        }
+
+
+        //--------------------------------------------------
+        // STORE PENDING REDIRECT
+        //--------------------------------------------------
+
+    setPendingRedirect({
+    pathname: redirectPath ?? '/(tabs)',
+    params: redirectParams,
+    profileIncomplete,
+    shouldShowProfileModal,
+});
+
+
+    } catch (error: any) {
+
+        console.log(
+            'GOOGLE LOGIN ERROR:',
+            error?.response?.data ||
+            error?.message ||
+            error
+        );
+
+
+        //--------------------------------------------------
+        // ACCOUNT ALREADY EXISTS
+        //--------------------------------------------------
+
+        const backendMessage =
+            error?.response?.data?.message;
+
+
+        const message =
+            backendMessage ||
+            error?.message ||
+            'Google login failed';
+
+
+        setStatusModal({
+            visible: true,
+            type: 'error',
+            title: 'Google Login Failed',
+            message,
+        });
+
+
+    } finally {
+
+        setLoading(false);
+
+    }
+
+};
 
     const handleAppleLogin = () => {
         console.log('Continue with Apple');
@@ -604,23 +891,19 @@ setPendingRedirect({
             pendingRedirect
         ) {
 
-            if (pendingRedirect.profileIncomplete) {
+        if (
+    pendingRedirect?.profileIncomplete === true &&
+    pendingRedirect?.shouldShowProfileModal === true
+) {
+    setShowProfileModal(true);
+} else {
+    router.replace({
+        pathname: pendingRedirect.pathname,
+        params: pendingRedirect.params,
+    });
 
-                // Profile is incomplete.
-                // Show ConfirmModal AFTER StatusModal closes.
-                setShowProfileModal(true);
-
-            } else {
-
-                // Profile is complete.
-                // Navigate normally.
-                router.replace({
-                    pathname: pendingRedirect.pathname,
-                    params: pendingRedirect.params,
-                });
-
-                setPendingRedirect(null);
-            }
+    setPendingRedirect(null);
+}
         }
     }}
 />

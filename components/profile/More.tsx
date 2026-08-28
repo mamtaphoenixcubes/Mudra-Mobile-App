@@ -69,33 +69,21 @@ export default function More() {
   | MODALS
   |--------------------------------------------------------------------------
   */
-
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
-
-
-
   /*
   |--------------------------------------------------------------------------
   | LOGIN
   |--------------------------------------------------------------------------
   */
-
-  const handleLogin = async () => {
-
-    /*
-     * Mark that the user is coming from More.
-     * After successful login, the profile check
-     * will run when More is displayed again.
-     */
-    await AsyncStorage.setItem(
-      'pendingProfileCheckSource',
-      'more'
-    );
-
-    router.push('/auth/login');
-  };
-
+    const handleLogin = () => {
+        router.push({
+            pathname: '/auth/login',
+            params: {
+                profileCheckSource: 'more',
+            },
+        });
+    };
   /*
   |--------------------------------------------------------------------------
   | MENU ICONS
