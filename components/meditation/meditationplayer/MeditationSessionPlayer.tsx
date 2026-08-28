@@ -627,35 +627,35 @@ export default function MeditationSessionPlayer() {
         setIsPlaying(true);
     };
 
-   const completeMedia = async (
-    completedDuration: number
-) => {
-    try {
-        const response = await axios.post(
-            `${process.env.EXPO_PUBLIC_API_URL}/yoga-nidras/media-complete`,
-            {
-                profileDocumentId,
-                mediaType,
-                mediaDocumentId: media?.documentId,
-                yogaNidraDocumentId: nidra?.documentId,
-                completedDuration,
-            },
-            {
-                headers: {
-                    Authorization: `Bearer ${token}`,
+    const completeMedia = async (
+        completedDuration: number
+    ) => {
+        try {
+            const response = await axios.post(
+                `${process.env.EXPO_PUBLIC_API_URL}/yoga-nidras/media-complete`,
+                {
+                    profileDocumentId,
+                    mediaType,
+                    mediaDocumentId: media?.documentId,
+                    yogaNidraDocumentId: nidra?.documentId,
+                    completedDuration,
                 },
-            }
-        );
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
 
-        return response.data;
-    } catch (error: any) {
-        console.log(
-            "MEDIA_COMPLETE_ERROR",
-            error?.response?.data || error
-        );
-        return null;
-    }
-};
+            return response.data;
+        } catch (error: any) {
+            console.log(
+                "MEDIA_COMPLETE_ERROR",
+                error?.response?.data || error
+            );
+            return null;
+        }
+    };
 
     const seekAudio = async (
         seconds: number
@@ -918,35 +918,35 @@ export default function MeditationSessionPlayer() {
 
     //     setIsPlaying(false);
     // };
-  const handleFloatingTimerComplete = async () => {
-    floatingTimerRunningRef.current = false;
+    const handleFloatingTimerComplete = async () => {
+        floatingTimerRunningRef.current = false;
 
-    if (soundRef.current) {
-        await soundRef.current.pauseAsync();
-    }
+        if (soundRef.current) {
+            await soundRef.current.pauseAsync();
+        }
 
-    setIsPlaying(false);
+        setIsPlaying(false);
 
-    if (completedRef.current) return;
+        if (completedRef.current) return;
 
-    completedRef.current = true;
+        completedRef.current = true;
 
-    const response = await completeMedia(timerDuration);
+        const response = await completeMedia(timerDuration);
 
 
-    if (response) {
-        router.replace({
-            pathname: "/sessioncomplete",
-            params: {
-                mudraId: response?.data.yogaNidra.documentId,
-                title: response?.data.yogaNidra.name,
-                duration: String(response?.data.lastSessionDuration),
-                completedAt: response?.data.completedAt,
-                activityId: response?.data.activityDocumentId,
-            },
-        });
-    }
-};
+        if (response) {
+            router.replace({
+                pathname: "/sessioncomplete",
+                params: {
+                    mudraId: response?.data.yogaNidra.documentId,
+                    title: response?.data.yogaNidra.name,
+                    duration: String(response?.data.lastSessionDuration),
+                    completedAt: response?.data.completedAt,
+                    activityId: response?.data.activityDocumentId,
+                },
+            });
+        }
+    };
 
     return (
         <View style={[styles.container, { backgroundColor: colors.background, position: 'relative' }]}>
@@ -1132,7 +1132,7 @@ const styles = StyleSheet.create({
     },
     floatingTimerWrapper: {
         position: 'absolute',
-        top: moderateScale(120), 
+        top: moderateScale(120),
         right: moderateScale(16),
         zIndex: 99,
     },

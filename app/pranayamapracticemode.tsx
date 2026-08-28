@@ -1,0 +1,2 @@
+import PranayamaPracticeModeScreen from '@/components/pranayama/practicemode/PracticeModeScreen'
+export default PranayamaPracticeModeScreen

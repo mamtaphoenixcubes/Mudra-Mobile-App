@@ -1,0 +1,2 @@
+import MeditationPracticeModeScreen from '@/components/meditation/practicemode/PracticeModeScreen'
+export default MeditationPracticeModeScreen

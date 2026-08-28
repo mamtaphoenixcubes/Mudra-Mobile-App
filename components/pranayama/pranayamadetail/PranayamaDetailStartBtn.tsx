@@ -1,24 +1,56 @@
 import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
-import { router } from 'expo-router';
-import { getPranayamaDetailStyles } from '@/assets/styles/pranayama/pranayamaDetailStyles';
-import { useTheme } from '@/constants/ThemeContext';
-import PlaySvg from '@/assets/icons/play.svg';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { useRouter } from 'expo-router';
+import PlayIcon from '@/assets/icons/play.svg';
 
-export default function PranayamaDetailStartBtn() {
-    const { colors } = useTheme();
-    const styles = getPranayamaDetailStyles(colors);
+export default function PranayamaDetailStartBtn({ pranayama }: { pranayama?: any }) {
+    const router = useRouter();
 
     return (
-        <View style={styles.startBtnContainer}>
+        <View style={styles.buttonWrapper}>
             <TouchableOpacity
                 style={styles.startBtn}
-                onPress={() => router.push('/pranayamaplayer')}
                 activeOpacity={0.85}
+                onPress={() =>
+                    router.push({
+                        pathname: '/pranayamameditation',
+                        params: {
+                            id: pranayama?.documentId,
+                        },
+                    })
+                }
             >
-                <PlaySvg width={20} height={20} color="#FFFFFF" />
-                <Text style={styles.startBtnText}>Start Practice</Text>
+                <Text style={styles.startBtnText}>
+                    Start Practice
+                </Text>
+
+                <PlayIcon
+                    width={16}
+                    height={16}
+                />
             </TouchableOpacity>
         </View>
     );
 }
+
+const styles = StyleSheet.create({
+    buttonWrapper: {
+        paddingHorizontal: 16,
+        paddingTop: 16,
+    },
+    startBtn: {
+        backgroundColor: '#9A85FE',
+        borderRadius: 6,
+        height: 52,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 10,
+    },
+    startBtnText: {
+        fontFamily: 'SF-Pro-Display',
+        fontWeight: '600',
+        fontSize: 16,
+        color: '#fff',
+    },
+});
