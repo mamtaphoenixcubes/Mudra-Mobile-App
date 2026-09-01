@@ -35,6 +35,7 @@ export default function EditProfile() {
     const insets = useSafeAreaInsets();
 
     const { user, token, updateUser } = useAuthStore();
+console.log(user,"userrrrrrrrrrrrrrrrrrrrr");
 
     // ── Basic fields ──
     const [fullName, setFullName] = useState(user?.fullName ?? '');
@@ -75,17 +76,14 @@ export default function EditProfile() {
 const [photoUri, setPhotoUri] = useState<string | null>(() => {
     let rawUrl = null;
 
-    // Google profile image has priority
-    if (
-        user?.authProvider === 'google' &&
-        user?.googleProfileImage
-    ) {
-        rawUrl = user.googleProfileImage;
+    // 1. Profile image has priority
+    if (user?.profileImage?.url) {
+        rawUrl = user.profileImage.url;
     }
 
-    // Otherwise use Strapi profile image
-    else if (user?.profileImage?.url) {
-        rawUrl = user.profileImage.url;
+    // 2. If no profile image, use Google profile image
+    else if (user?.googleProfileImage) {
+        rawUrl = user.googleProfileImage;
     }
 
     if (!rawUrl) {
@@ -107,7 +105,6 @@ const [photoUri, setPhotoUri] = useState<string | null>(() => {
 const displayPhotoUri = photoUri
     ? `${photoUri}${photoUri.includes('?') ? '&' : '?'}cacheBust=${Date.now()}`
     : null;
-console.log(photoUri,"photoUriphotoUriphotoUriphotoUriphotoUri");
 
     const [photoChanged, setPhotoChanged] = useState(false);
 

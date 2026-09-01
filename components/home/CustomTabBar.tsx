@@ -41,11 +41,12 @@ const ICON_SIZE = moderateScale(24)
 
 export default function CustomTabBar({ state, navigation }: BottomTabBarProps) {
 
- const user = useAuthStore((s) => s.user)
+const user = useAuthStore((s) => s.user)
 
 const profileIncomplete =
-  user?.profileComplete !== true &&
-  Number(user?.profileCompletionPercentage ?? 0) < 100
+  !!user &&
+  user.profileComplete !== true &&
+  Number(user.profileCompletionPercentage ?? 0) < 100
 
 const blinkAnim = React.useRef(new Animated.Value(1)).current
 
@@ -69,9 +70,7 @@ React.useEffect(() => {
       }),
     ])
   )
-
   animation.start()
-
   return () => {
     animation.stop()
   }

@@ -202,13 +202,13 @@ const handleLogin = () => {
     };
   }, [loggedIn, user]);
 const profileImageUri =
-  user?.authProvider === 'google' && user?.googleProfileImage
-    ? user.googleProfileImage
-    : user?.profileImage?.url
-      ? user.profileImage.url.startsWith('http://') ||
-        user.profileImage.url.startsWith('https://')
-        ? user.profileImage.url
-        : `${process.env.EXPO_PUBLIC_IMAGE_API_URL}${user.profileImage.url}`
+  user?.profileImage?.url
+    ? user.profileImage.url.startsWith('http://') ||
+      user.profileImage.url.startsWith('https://')
+      ? user.profileImage.url
+      : `${process.env.EXPO_PUBLIC_IMAGE_API_URL}${user.profileImage.url}`
+    : user?.googleProfileImage
+      ? user.googleProfileImage
       : null;
   return (
 
