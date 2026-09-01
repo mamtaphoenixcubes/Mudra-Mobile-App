@@ -1,11 +1,14 @@
 import React from 'react'
-import { View, TouchableOpacity, Text, StyleSheet, Dimensions } from 'react-native'
+import { View, TouchableOpacity, Text, StyleSheet, Dimensions, ScrollView } from 'react-native'
 import { useRouter, usePathname } from 'expo-router'
 import HomeSvg from '@/assets/icons/Home.svg'
 import LibrarySvg from '@/assets/icons/Library.svg'
 import PracticeSvg from '@/assets/icons/Practice.svg'
 import NidraSvg from '@/assets/icons/Nidra.svg'
 import ProfileSvg from '@/assets/icons/Profile.svg'
+import AsanaSvg from '@/assets/icons/Asana.svg'
+import PranayamaSvg from '@/assets/icons/Pranayama.svg'
+import MeditationsSvg from '@/assets/icons/Meditations.svg'
 import { Image } from 'react-native'
 import { useAuthStore } from '@/store/authStore'
 
@@ -20,7 +23,12 @@ const TABS = [
     { name: 'practice', label: 'Practice', route: '/(tabs)/practice', Icon: PracticeSvg },
     { name: 'nidra', label: 'Nidra', route: '/(tabs)/nidra', Icon: NidraSvg },
     { name: 'profile', label: 'Profile', route: '/(tabs)/profile', Icon: ProfileSvg },
+    { name: 'asana', label: 'Asana', route: '/asana', Icon: AsanaSvg },
+    { name: 'pranayama', label: 'Pranayama', route: '/pranayama', Icon: PranayamaSvg },
+    { name: 'meditations', label: 'Meditations', route: '/meditations', Icon: MeditationsSvg },
 ]
+
+const VISIBLE_TABS = TABS.slice(0, 5)
 
 const ICON_SIZE = moderateScale(24)
 
@@ -37,46 +45,49 @@ export default function StandaloneTabBar() {
 
     return (
         <View style={styles.container}>
-            {TABS.map((tab) => {
-                const isFocused =
-                    tab.name === 'index'
-                        ? pathname === '/' || pathname === '/(tabs)' || pathname === '/(tabs)/'
-                        : pathname.includes(tab.name)
+            {/* {TABS.map((tab) => { */}
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+                {VISIBLE_TABS.map((tab) => {
+                    const isFocused =
+                        tab.name === 'index'
+                            ? pathname === '/' || pathname === '/(tabs)' || pathname === '/(tabs)/'
+                            : pathname.includes(tab.name)
 
-                return (
-                    <TouchableOpacity
-                        key={tab.name}
-                        onPress={() => router.push(tab.route as any)}
-                        style={styles.tab}
-                        activeOpacity={0.7}
-                    >
-                        {tab.name === 'profile' && profileImageUri ? (
-                            <Image
-                                source={{ uri: profileImageUri }}
-                                style={{
-                                    width: ICON_SIZE,
-                                    height: ICON_SIZE,
-                                    borderRadius: ICON_SIZE / 2,
-                                    opacity: isFocused ? 1 : 0.5,
-                                    borderWidth: isFocused ? 1.5 : 0,
-                                    borderColor: '#FFFFFF',
-                                }}
-                            />
-                        ) : (
-                            <tab.Icon
-                                width={tab.name === 'practice' ? ICON_SIZE + moderateScale(6) : ICON_SIZE}
-                                height={tab.name === 'practice' ? ICON_SIZE + moderateScale(6) : ICON_SIZE}
-                                color="#FFFFFF"
-                                opacity={isFocused ? 1 : 0.5}
-                            />
-                        )}
-                        <Text style={[styles.label, { opacity: isFocused ? 1 : 0.5 }]}>
-                            {tab.label}
-                        </Text>
-                        {isFocused && <View style={styles.activeIndicator} />}
-                    </TouchableOpacity>
-                )
-            })}
+                    return (
+                        <TouchableOpacity
+                            key={tab.name}
+                            onPress={() => router.push(tab.route as any)}
+                            style={styles.tab}
+                            activeOpacity={0.7}
+                        >
+                            {tab.name === 'profile' && profileImageUri ? (
+                                <Image
+                                    source={{ uri: profileImageUri }}
+                                    style={{
+                                        width: ICON_SIZE,
+                                        height: ICON_SIZE,
+                                        borderRadius: ICON_SIZE / 2,
+                                        opacity: isFocused ? 1 : 0.5,
+                                        borderWidth: isFocused ? 1.5 : 0,
+                                        borderColor: '#FFFFFF',
+                                    }}
+                                />
+                            ) : (
+                                <tab.Icon
+                                    width={tab.name === 'practice' ? ICON_SIZE + moderateScale(6) : ICON_SIZE}
+                                    height={tab.name === 'practice' ? ICON_SIZE + moderateScale(6) : ICON_SIZE}
+                                    color="#FFFFFF"
+                                    opacity={isFocused ? 1 : 0.5}
+                                />
+                            )}
+                            <Text style={[styles.label, { opacity: isFocused ? 1 : 0.5 }]}>
+                                {tab.label}
+                            </Text>
+                            {isFocused && <View style={styles.activeIndicator} />}
+                        </TouchableOpacity>
+                    )
+                })}
+            </ScrollView>
         </View>
     )
 }
@@ -120,5 +131,12 @@ const styles = StyleSheet.create({
         height: moderateScale(3),
         borderRadius: moderateScale(2),
         backgroundColor: '#FFFFFF',
+    },
+    scrollContent: {
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        alignItems: 'center',
+        flexGrow: 1,
+        width: '100%',
     },
 })

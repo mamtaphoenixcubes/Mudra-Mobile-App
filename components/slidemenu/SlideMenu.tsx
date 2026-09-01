@@ -42,7 +42,7 @@ export default function SlideMenu({ visible, onClose }: SlideMenuProps) {
 
     // Staggered item animations
     const itemAnims = useRef(
-        Array.from({ length: 15 }, () => new Animated.Value(0))
+        Array.from({ length: 20 }, () => new Animated.Value(0))
     ).current;
 
     const menuSections = {
@@ -57,6 +57,7 @@ export default function SlideMenu({ visible, onClose }: SlideMenuProps) {
             { id: 'meditation', title: 'Meditation', icon: 'leaf-outline', route: '/meditation' },
 
             //{ id: 'savedempty', title: 'Saved Empty', icon: 'heart-outline', route: '/savedempty' },
+            { id: 'ticketdetail', title: 'Ticket Replies', icon: 'mail-outline', route: '/ticketdetail' },
 
             { id: 'subscription', title: 'Subscription / Premium', icon: 'star-outline', route: '/subscription' },
         ] as MenuItem[],
