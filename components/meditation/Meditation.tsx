@@ -18,7 +18,7 @@ export default function Meditation() {
 
     return (
         <View style={styles.container}>
-            <MeditationHeader />
+            {/* <MeditationHeader /> */}
             <ScrollView
                 style={{ flex: 1, backgroundColor: colors.background }}
                 contentContainerStyle={{ paddingBottom: TAB_BAR_HEIGHT + insets.bottom }}
