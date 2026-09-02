@@ -40,6 +40,26 @@ export default function TabsLayout() {
           header: () => <SearchHeader />
         }}
       />
+      <Tabs.Screen
+        name="asana"
+        options={{
+          title: 'Asana',
+          header: () => <SearchHeader />
+        }}
+      />
+      <Tabs.Screen
+        name="meditation"
+        options={{
+          title: 'Meditation',
+          header: () => <SearchHeader />
+        }}
+      /><Tabs.Screen
+        name="pranayama"
+        options={{
+          title: 'Pranayama',
+          header: () => <SearchHeader />
+        }}
+      />
       <Tabs.Screen name="profile" options={{ title: 'Profile' }} />
     </Tabs>
 

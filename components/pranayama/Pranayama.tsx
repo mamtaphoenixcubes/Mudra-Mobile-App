@@ -18,7 +18,7 @@ export default function Pranayama() {
 
     return (
         <View style={styles.container}>
-            <PranayamaHeader />
+            {/* <PranayamaHeader /> */}
             <ScrollView
                 style={{ flex: 1, backgroundColor: colors.background }}
                 contentContainerStyle={{ paddingBottom: TAB_BAR_HEIGHT + insets.bottom }}

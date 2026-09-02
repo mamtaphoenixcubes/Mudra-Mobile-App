@@ -18,7 +18,7 @@ export default function Asana() {
 
     return (
          <View style={styles.container}>
-        <AsanaHeader />
+        {/* <AsanaHeader /> */}
         <ScrollView
             style={{ flex: 1, backgroundColor: colors.background }}
             contentContainerStyle={{ paddingBottom: TAB_BAR_HEIGHT + insets.bottom }}
