@@ -119,7 +119,6 @@ const getProfileCompletionStatus = (profileUser: any) => {
 
             const url =
                 `${process.env.EXPO_PUBLIC_API_URL}/auth/login`;
-
             const payload = {
                 email,
                 password,
