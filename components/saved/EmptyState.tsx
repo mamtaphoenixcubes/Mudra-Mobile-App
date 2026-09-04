@@ -8,16 +8,20 @@ import { Ionicons } from '@expo/vector-icons';
 import ClockSvg from '@/assets/icons/clock.svg';
 import FavouriteSvg from '@/assets/icons/Favourite.svg';
 import StarSvg from '@/assets/icons/Star.svg';
+import ClockWhiteSvg from '@/assets/icons/ClockWhite.svg';
+import FavouriteWhiteSvg from '@/assets/icons/FavouriteWhite.svg';
+import StarWhiteEmptySvg from '@/assets/icons/StarWhiteEmpty.svg';
 
-const WHY_ITEMS = [
-    { icon: <ClockSvg width={20} height={20} />, text: 'Quick access to your favorite mudras' },
-    { icon: <FavouriteSvg width={20} height={20} />, text: 'Continue your practice anytime' },
-    { icon: <StarSvg width={20} height={20} />, text: 'Build your personal collection' },
-];
 
 export default function EmptyState() {
-    const { colors } = useTheme()
-const styles = getSavedStyles(colors)
+    const { colors, isDark } = useTheme();
+    const styles = getSavedStyles(colors, isDark);
+
+    const WHY_ITEMS = [
+        { icon: isDark ? <ClockWhiteSvg width={20} height={20} /> : <ClockSvg width={20} height={20} />, text: 'Quick access to your favorite mudras' },
+        { icon: isDark ? <FavouriteWhiteSvg width={20} height={20} /> : <FavouriteSvg width={20} height={20} />, text: 'Continue your practice anytime' },
+        { icon: isDark ? <StarWhiteEmptySvg width={20} height={20} /> : <StarSvg width={20} height={20} />, text: 'Build your personal collection' },
+    ];
     return (
         <View style={styles.emptyContainer}>
             <Image
@@ -36,7 +40,7 @@ const styles = getSavedStyles(colors)
                 activeOpacity={0.8}
                 onPress={() => router.push('/browse')}
             >
-                <Ionicons name="bookmark-outline" size={18} color="#0F0F0F99" />
+                <Ionicons name="bookmark-outline" size={18} color={isDark ? '#FFFFFF99' : '#0F0F0F99'} />
                 <Text style={styles.emptyBtnText}>Explore Mudra Library</Text>
             </TouchableOpacity>
 

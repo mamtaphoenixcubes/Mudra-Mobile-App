@@ -90,19 +90,19 @@ export default function RootLayout() {
 
               <Stack.Screen name="editprofile" options={{ headerShown: false }} />
 
-              <Stack.Screen name="asana" options={{ headerShown: false }} />
+              {/* <Stack.Screen name="asana" options={{ headerShown: false }} /> */}
               <Stack.Screen name="asanadetail" options={{ headerShown: false }} />
               <Stack.Screen name="asanaplayer" options={{ headerShown: false }} />
               <Stack.Screen name="asanalist" options={{ headerShown: false }} />
 
-              <Stack.Screen name="pranayama" options={{ headerShown: false }} />
+              {/* <Stack.Screen name="pranayama" options={{ headerShown: false }} /> */}
               <Stack.Screen name="pranayamalist" options={{ headerShown: false }} />
               <Stack.Screen name="pranayamadetail" options={{ headerShown: false }} />
               <Stack.Screen name="pranayamaplayer" options={{ headerShown: false }} />
               <Stack.Screen name="pranayamameditation" options={{ headerShown: false }} />
               <Stack.Screen name="pranayamapracticemode" options={{ headerShown: false }} />
 
-              <Stack.Screen name="meditation" options={{ headerShown: false }} />
+              {/* <Stack.Screen name="meditation" options={{ headerShown: false }} /> */}
               <Stack.Screen name="meditationdetail" options={{ headerShown: false }} />
               <Stack.Screen name="meditationplayer" options={{ headerShown: false }} />
               <Stack.Screen name="meditationlist" options={{ headerShown: false }} />

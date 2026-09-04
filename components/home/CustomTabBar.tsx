@@ -7,7 +7,9 @@ import {
   Dimensions,
   Image,
   Animated,
-  ScrollView
+  ScrollView,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
 } from 'react-native'
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs'
 import HomeSvg from '@/assets/icons/Home.svg'
@@ -48,6 +50,8 @@ const TAB_LABELS: Record<string, string> = {
 }
 
 const ICON_SIZE = moderateScale(24)
+const CONTAINER_HORIZONTAL_INSET = moderateScale(0)
+const PAGE_WIDTH = SCREEN_WIDTH - CONTAINER_HORIZONTAL_INSET * 2
 
 export default function CustomTabBar({ state, navigation }: BottomTabBarProps) {
 
@@ -94,11 +98,23 @@ export default function CustomTabBar({ state, navigation }: BottomTabBarProps) {
     : null
 
   const visibleRoutes = state.routes.filter((r) => TAB_ICONS[r.name])
-  const routePages = [visibleRoutes.slice(0, 5), visibleRoutes.slice(5)]
+  const routePages = [visibleRoutes.slice(0, 4), visibleRoutes.slice(4, 8)]
+
+  const [activePage, setActivePage] = React.useState(0)
+
+  const handleScrollEnd = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const page = Math.round(e.nativeEvent.contentOffset.x / PAGE_WIDTH)
+    setActivePage(page)
+  }
 
   return (
     <View style={styles.container}>
-      <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false}>
+      <ScrollView
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        onMomentumScrollEnd={handleScrollEnd}
+      >
         {routePages.map((page, pageIndex) => (
           <View key={pageIndex} style={styles.page}>
             {page.map((route) => {
@@ -154,10 +170,20 @@ export default function CustomTabBar({ state, navigation }: BottomTabBarProps) {
                 </TouchableOpacity>
               )
             })}
-
           </View>
         ))}
       </ScrollView>
+
+      {routePages.length > 1 && (
+        <View style={styles.dotsRow}>
+          {routePages.map((_, i) => (
+            <View
+              key={i}
+              style={[styles.dot, activePage === i && styles.dotActive]}
+            />
+          ))}
+        </View>
+      )}
     </View>
   )
 }
@@ -165,20 +191,17 @@ export default function CustomTabBar({ state, navigation }: BottomTabBarProps) {
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    bottom: moderateScale(10),
-    left: moderateScale(15),
-    right: moderateScale(15),
-    height: moderateScale(80),
-    borderRadius: moderateScale(30),
+    bottom: moderateScale(0),
+    left: CONTAINER_HORIZONTAL_INSET,
+    right: CONTAINER_HORIZONTAL_INSET,
+    borderRadius: moderateScale(10),
     backgroundColor: '#9A85FE',
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
     elevation: 10,
     shadowColor: '#000',
     shadowOpacity: 0.2,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 4 },
+    overflow: 'hidden',
   },
   tab: {
     alignItems: 'center',
@@ -186,16 +209,34 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: moderateScale(8),
   },
-
   page: {
-    width: SCREEN_WIDTH - moderateScale(15) * 2,
+    width: PAGE_WIDTH,
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
+    paddingTop: moderateScale(14),
+    paddingBottom: moderateScale(8),
+  },
+  dotsRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: moderateScale(6),
+    paddingBottom: moderateScale(10),
+  },
+  dot: {
+    width: moderateScale(5),
+    height: moderateScale(5),
+    borderRadius: moderateScale(2.5),
+    backgroundColor: 'rgba(255,255,255,0.4)',
+  },
+  dotActive: {
+    width: moderateScale(14),
+    backgroundColor: '#FFFFFF',
   },
   label: {
     fontFamily: 'SF-Pro-Display',
-    fontWeight: '600',
+    fontWeight: '400',
     fontSize: moderateScale(12),
     color: '#FFFFFF',
     marginTop: moderateScale(4),
@@ -216,7 +257,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-
   profileIncompleteIndicator: {
     position: 'absolute',
     top: moderateScale(-3),

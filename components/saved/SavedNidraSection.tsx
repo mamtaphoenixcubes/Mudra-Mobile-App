@@ -25,7 +25,7 @@ const moderateScale = (size: number, factor = 0.5) => {
 interface Props {
     nidras: any[];
     loading?: boolean;
-    error?: string |null;
+    error?: string | null;
     fetchSavedNidras: (profileDocumentId: string) => Promise<void>;
 }
 
@@ -35,57 +35,57 @@ export default function SavedNidraSection({
     error,
     fetchSavedNidras,
 }: Props) {
-    const { colors } = useTheme();
-    const styles = getSavedStyles(colors);
-const { token, user } = useAuthStore();
+    const { colors, isDark } = useTheme();
+    const styles = getSavedStyles(colors, isDark);
+    const { token, user } = useAuthStore();
 
-const profileDocumentId =
-    user?.id || user?.profileDocumentId;
+    const profileDocumentId =
+        user?.id || user?.profileDocumentId;
 
-const [likedMap, setLikedMap] = useState<Record<string, boolean>>({});
-useEffect(() => {
-    const initialLikes: Record<string, boolean> = {};
+    const [likedMap, setLikedMap] = useState<Record<string, boolean>>({});
+    useEffect(() => {
+        const initialLikes: Record<string, boolean> = {};
 
-    (nidras ?? []).forEach((item) => {
-        initialLikes[item.documentId] = item?.IsLiked ?? false;
-    });
+        (nidras ?? []).forEach((item) => {
+            initialLikes[item.documentId] = item?.IsLiked ?? false;
+        });
 
-    setLikedMap(initialLikes);
-}, [nidras]);
-const handleLike = async (nidra: any) => {
-    if (!token) {
-        Alert.alert('Login Required', 'Please login first.');
-        return;
-    }
-
-    try {
-        await axios.post(
-            `${process.env.EXPO_PUBLIC_API_URL}/yoga-nidras/${nidra.documentId}/like`,
-            {
-                profileDocumentId,
-            },
-            {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            }
-        );
-
-        // Optimistic UI update
-        setLikedMap((prev) => ({
-            ...prev,
-            [nidra.documentId]: !prev[nidra.documentId],
-        }));
-
-        // Refresh saved nidras
-        if (profileDocumentId) {
-            await fetchSavedNidras(profileDocumentId);
+        setLikedMap(initialLikes);
+    }, [nidras]);
+    const handleLike = async (nidra: any) => {
+        if (!token) {
+            Alert.alert('Login Required', 'Please login first.');
+            return;
         }
-    } catch (error) {
-        console.log(error);
-        Alert.alert('Error', 'Unable to update like.');
-    }
-};
+
+        try {
+            await axios.post(
+                `${process.env.EXPO_PUBLIC_API_URL}/yoga-nidras/${nidra.documentId}/like`,
+                {
+                    profileDocumentId,
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+
+            // Optimistic UI update
+            setLikedMap((prev) => ({
+                ...prev,
+                [nidra.documentId]: !prev[nidra.documentId],
+            }));
+
+            // Refresh saved nidras
+            if (profileDocumentId) {
+                await fetchSavedNidras(profileDocumentId);
+            }
+        } catch (error) {
+            console.log(error);
+            Alert.alert('Error', 'Unable to update like.');
+        }
+    };
     const savedNidrasList = (nidras ?? []).filter(
         (item) => item?.IsSaved && item?.NidraIntroCard
     );
@@ -175,23 +175,23 @@ const handleLike = async (nidra: any) => {
                             ]}
                             activeOpacity={0.85}
                         >
-                           <TouchableOpacity
+                            <TouchableOpacity
                                 style={styles.mudraFavBtn}
                                 activeOpacity={0.7}
                                 onPress={() => handleLike(item)}
                             >
                                 <Ionicons
-                                  name={
+                                    name={
                                         likedMap[item.documentId]
                                             ? 'heart'
                                             : 'heart-outline'
                                     }
                                     size={16}
-                                 color={
-                                likedMap[item.documentId]
-                                    ? '#FF4D67'
-                                    : '#0F0F0F80'
-}
+                                    color={
+                                        likedMap[item.documentId]
+                                            ? '#FF4D67'
+                                            : '#0F0F0F80'
+                                    }
                                 />
                             </TouchableOpacity>
 
@@ -202,12 +202,11 @@ const handleLike = async (nidra: any) => {
                             >
                                 <Image
                                     source={{
-                                        uri: `${process.env.EXPO_PUBLIC_IMAGE_API_URL}${
-                                            image?.formats
-                                                ?.small
-                                                ?.url ||
+                                        uri: `${process.env.EXPO_PUBLIC_IMAGE_API_URL}${image?.formats
+                                            ?.small
+                                            ?.url ||
                                             image?.url
-                                        }`,
+                                            }`,
                                     }}
                                     style={
                                         styles.mudraImage

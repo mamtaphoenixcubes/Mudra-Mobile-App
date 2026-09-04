@@ -22,8 +22,8 @@ export default function SavedNidraSessionsSection({
     error,
     fetchSavedNidras,
 }: Props) {
-    const { colors } = useTheme();
-    const styles = getSavedStyles(colors);
+    const { colors, isDark } = useTheme();
+    const styles = getSavedStyles(colors, isDark);
 
     // Only keep items that actually have a media object
     const sessions = (nidras ?? []).filter(
@@ -77,17 +77,17 @@ export default function SavedNidraSessionsSection({
                     </Text>
                 </View>
             ) : (
-            <View style={styles.sessionsCard}>
-    {sessions.map((item: any, index: number) => (
- <SavedNidraSessionItem
-    key={item.documentId}
-    item={item}
-    index={index}
-    isLast={index === sessions.length - 1}
-    fetchSavedNidras={fetchSavedNidras}
-/>
-    ))}
-</View>
+                <View style={styles.sessionsCard}>
+                    {sessions.map((item: any, index: number) => (
+                        <SavedNidraSessionItem
+                            key={item.documentId}
+                            item={item}
+                            index={index}
+                            isLast={index === sessions.length - 1}
+                            fetchSavedNidras={fetchSavedNidras}
+                        />
+                    ))}
+                </View>
             )}
         </View>
     );

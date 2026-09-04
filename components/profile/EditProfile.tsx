@@ -19,6 +19,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import axios from 'axios';
 import AppHeader from '@/components/common/AppHeader';
+import StatusModal from '@/components/common/StatusModal';
 import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
 
 import { useTheme } from '@/constants/ThemeContext';
@@ -35,7 +36,7 @@ export default function EditProfile() {
     const insets = useSafeAreaInsets();
 
     const { user, token, updateUser } = useAuthStore();
-console.log(user,"userrrrrrrrrrrrrrrrrrrrr");
+    console.log(user, "userrrrrrrrrrrrrrrrrrrrr");
 
     // ── Basic fields ──
     const [fullName, setFullName] = useState(user?.fullName ?? '');
@@ -73,43 +74,51 @@ console.log(user,"userrrrrrrrrrrrrrrrrrrrr");
     const [showDobPicker, setShowDobPicker] = useState(false);
 
     // ── Photo ──
-const [photoUri, setPhotoUri] = useState<string | null>(() => {
-    let rawUrl = null;
+    const [photoUri, setPhotoUri] = useState<string | null>(() => {
+        let rawUrl = null;
 
-    // 1. Profile image has priority
-    if (user?.profileImage?.url) {
-        rawUrl = user.profileImage.url;
-    }
+        // 1. Profile image has priority
+        if (user?.profileImage?.url) {
+            rawUrl = user.profileImage.url;
+        }
 
-    // 2. If no profile image, use Google profile image
-    else if (user?.googleProfileImage) {
-        rawUrl = user.googleProfileImage;
-    }
+        // 2. If no profile image, use Google profile image
+        else if (user?.googleProfileImage) {
+            rawUrl = user.googleProfileImage;
+        }
 
-    if (!rawUrl) {
-        return null;
-    }
+        if (!rawUrl) {
+            return null;
+        }
 
-    // Complete URL
-    if (
-        rawUrl.startsWith('http://') ||
-        rawUrl.startsWith('https://') ||
-        rawUrl.startsWith('file://')
-    ) {
-        return rawUrl;
-    }
+        // Complete URL
+        if (
+            rawUrl.startsWith('http://') ||
+            rawUrl.startsWith('https://') ||
+            rawUrl.startsWith('file://')
+        ) {
+            return rawUrl;
+        }
 
-    // Strapi/local image
-    return `${process.env.EXPO_PUBLIC_IMAGE_API_URL}${rawUrl}`;
-});
-const displayPhotoUri = photoUri
-    ? `${photoUri}${photoUri.includes('?') ? '&' : '?'}cacheBust=${Date.now()}`
-    : null;
+        // Strapi/local image
+        return `${process.env.EXPO_PUBLIC_IMAGE_API_URL}${rawUrl}`;
+    });
+    const displayPhotoUri = photoUri
+        ? `${photoUri}${photoUri.includes('?') ? '&' : '?'}cacheBust=${Date.now()}`
+        : null;
 
     const [photoChanged, setPhotoChanged] = useState(false);
 
     const [saving, setSaving] = useState(false);
     const [uploadingPhoto, setUploadingPhoto] = useState(false);
+
+    const [statusModal, setStatusModal] = useState<{
+        visible: boolean;
+        type: 'success' | 'error';
+        title?: string;
+        message: string;
+        onCloseAction?: () => void;
+    }>({ visible: false, type: 'success', message: '' });
 
     const handleDobChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
         if (Platform.OS === 'android') {
@@ -127,7 +136,7 @@ const displayPhotoUri = photoUri
     const handlePickPhoto = async () => {
         const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (!permission.granted) {
-            Alert.alert('Permission needed', 'Please allow photo library access to change your profile picture.');
+            setStatusModal({ visible: true, type: 'error', title: 'Permission needed', message: 'Please allow photo library access to change your profile picture.' });
             return;
         }
 
@@ -184,7 +193,7 @@ const displayPhotoUri = photoUri
 
     const handleSave = async () => {
         if (!fullName.trim() || !username.trim()) {
-            Alert.alert('Error', 'Name and username are required');
+            setStatusModal({ visible: true, type: 'error', message: 'Name and username are required' });
             return;
         }
 
@@ -205,10 +214,7 @@ const displayPhotoUri = photoUri
                         'Profile image upload failed:',
                         uploadErr?.response?.data || uploadErr?.message || uploadErr
                     );
-                    Alert.alert(
-                        'Photo upload failed',
-                        'We could not upload your new photo. Your other changes will still be saved.'
-                    );
+                    setStatusModal({ visible: true, type: 'error', title: 'Photo upload failed', message: 'We could not upload your new photo. Your other changes will still be saved.' });
                 } finally {
                     setUploadingPhoto(false);
                 }
@@ -245,18 +251,13 @@ const displayPhotoUri = photoUri
 
                 await updateUser(responseUser);
                 setPhotoChanged(false);
-                Alert.alert('Success', 'Profile updated', [
-                    { text: 'OK', onPress: () => router.back() },
-                ]);
+                setStatusModal({ visible: true, type: 'success', message: 'Profile updated', onCloseAction: () => router.back() });
             } else {
-                Alert.alert('Error', res?.data?.message ?? 'Update failed');
+                setStatusModal({ visible: true, type: 'error', message: res?.data?.message ?? 'Update failed' });
             }
         } catch (err: any) {
             console.log('Update profile error:', err?.response?.data || err?.message || err);
-            Alert.alert(
-                'Error',
-                err?.response?.data?.message ?? 'Could not update your profile. Please try again.'
-            );
+            setStatusModal({ visible: true, type: 'error', message: err?.response?.data?.message ?? 'Could not update your profile. Please try again.' });
         } finally {
             setSaving(false);
         }
@@ -284,24 +285,24 @@ const displayPhotoUri = photoUri
                 {/* Profile Photo */}
                 <View style={styles.avatarSection}>
                     <TouchableOpacity onPress={handlePickPhoto} activeOpacity={0.8} disabled={uploadingPhoto}>
-                      <View style={styles.avatarWrapper}>
-    {uploadingPhoto ? (
-        <ActivityIndicator color={colors.primary} />
-    ) : displayPhotoUri ? (
-        <Image
-            key={displayPhotoUri}
-            source={{ uri: displayPhotoUri }}
-            style={styles.avatarImage}
-            resizeMode="cover"
-        />
-    ) : (
-        <Ionicons
-            name="person"
-            size={moderateScale(40)}
-            color={colors.primary}
-        />
-    )}
-</View>
+                        <View style={styles.avatarWrapper}>
+                            {uploadingPhoto ? (
+                                <ActivityIndicator color={colors.primary} />
+                            ) : displayPhotoUri ? (
+                                <Image
+                                    key={displayPhotoUri}
+                                    source={{ uri: displayPhotoUri }}
+                                    style={styles.avatarImage}
+                                    resizeMode="cover"
+                                />
+                            ) : (
+                                <Ionicons
+                                    name="person"
+                                    size={moderateScale(40)}
+                                    color={colors.primary}
+                                />
+                            )}
+                        </View>
 
                         <View style={styles.avatarEditBadge}>
                             <Ionicons name="camera" size={moderateScale(14)} color="#FFFFFF" />
@@ -481,6 +482,17 @@ const displayPhotoUri = photoUri
                 </TouchableOpacity>
 
             </ScrollView>
+
+            <StatusModal
+                visible={statusModal.visible}
+                type={statusModal.type}
+                title={statusModal.title}
+                message={statusModal.message}
+                onClose={() => {
+                    setStatusModal((s) => ({ ...s, visible: false }));
+                    statusModal.onCloseAction?.();
+                }}
+            />
         </KeyboardAvoidingView>
     );
 }

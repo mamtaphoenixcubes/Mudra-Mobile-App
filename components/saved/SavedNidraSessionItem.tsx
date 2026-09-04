@@ -23,8 +23,8 @@ export default function SavedNidraSessionItem({
     isLast,
     fetchSavedNidras,
 }: Props) {
-    const { colors } = useTheme();
-    const styles = getSavedStyles(colors);
+    const { colors, isDark } = useTheme();
+const styles = getSavedStyles(colors, isDark);
 
     const { token, user } = useAuthStore();
 

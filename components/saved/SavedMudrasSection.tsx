@@ -36,17 +36,26 @@ export default function SavedMudrasSection({
 
   const [savedMudras, setSavedMudras] =
     useState(mudras);
-console.log(savedMudras,"savedmudras");
+  console.log(savedMudras, "savedmudras");
 
   const [likingId, setLikingId] =
     useState<string | null>(null);
 
-  const { colors } = useTheme();
-  const styles = getSavedStyles(colors);
+  const { colors, isDark } = useTheme();
+  const styles = getSavedStyles(colors, isDark);
 
   useEffect(() => {
     setSavedMudras(mudras);
   }, [mudras]);
+
+
+  const [activeCardIndex, setActiveCardIndex] = useState(0);
+  const CARD_STRIDE = moderateScale(150) + moderateScale(12); // mudraCard width + mudrasScrollContent gap
+
+  const handleCardScroll = (e: any) => {
+    const index = Math.round(e.nativeEvent.contentOffset.x / CARD_STRIDE);
+    setActiveCardIndex(Math.max(0, Math.min(index, savedMudras.length - 1)));
+  };
 
   const handleMudraPress = (
     mudra: any
@@ -81,8 +90,8 @@ console.log(savedMudras,"savedmudras");
         {
           headers: token
             ? {
-                Authorization: `Bearer ${token}`,
-              }
+              Authorization: `Bearer ${token}`,
+            }
             : {},
         }
       );
@@ -133,7 +142,7 @@ console.log(savedMudras,"savedmudras");
           }
         >
 
-      
+
         </TouchableOpacity>
       </View>
 
@@ -173,6 +182,9 @@ console.log(savedMudras,"savedmudras");
           contentContainerStyle={
             styles.mudrasScrollContent
           }
+
+          onScroll={handleCardScroll}
+          scrollEventThrottle={16}
         >
           {savedMudras.map(
             (item: any, index: number) => {
@@ -191,12 +203,12 @@ console.log(savedMudras,"savedmudras");
                 videoPlaylist ||
                 video;
 
-             const imageUrl =
-              mudra?.thumbnail?.url
-                ? `${process.env.EXPO_PUBLIC_IMAGE_API_URL}${mudra.thumbnail.url}`
-                : mudra?.introCard?.introCardImage?.url
-                ? `${process.env.EXPO_PUBLIC_IMAGE_API_URL}${mudra.introCard.introCardImage.url}`
-                : null;
+              const imageUrl =
+                mudra?.thumbnail?.url
+                  ? `${process.env.EXPO_PUBLIC_IMAGE_API_URL}${mudra.thumbnail.url}`
+                  : mudra?.introCard?.introCardImage?.url
+                    ? `${process.env.EXPO_PUBLIC_IMAGE_API_URL}${mudra.introCard.introCardImage.url}`
+                    : null;
 
               const description =
                 mudra?.introCard
@@ -206,11 +218,11 @@ console.log(savedMudras,"savedmudras");
                   ?.children?.[0]?.text ||
                 '';
 
-            const duration = mudra?.duration
-              ? mudra.duration
-              : session?.durationInSeconds
-              ? `${session.durationInSeconds} sec`
-              : '5-10 min';
+              const duration = mudra?.duration
+                ? mudra.duration
+                : session?.durationInSeconds
+                  ? `${session.durationInSeconds} sec`
+                  : '5-10 min';
 
               return (
                 <TouchableOpacity
@@ -222,8 +234,8 @@ console.log(savedMudras,"savedmudras");
                     {
                       backgroundColor:
                         CARD_COLORS[
-                          index %
-                            CARD_COLORS.length
+                        index %
+                        CARD_COLORS.length
                         ],
                     },
                   ]}
@@ -259,14 +271,14 @@ console.log(savedMudras,"savedmudras");
                     <Ionicons
                       name={
                         item.source ===
-                        'liked'
+                          'liked'
                           ? 'heart'
                           : 'heart-outline'
                       }
                       size={20}
                       color={
                         item.source ===
-                        'liked'
+                          'liked'
                           ? '#FF4D67'
                           : colors.textSub
                       }
@@ -282,8 +294,8 @@ console.log(savedMudras,"savedmudras");
                       source={
                         imageUrl
                           ? {
-                              uri: imageUrl,
-                            }
+                            uri: imageUrl,
+                          }
                           : require('@/assets/images/Pranayama_Images/GyanMudra.png')
                       }
                       style={
@@ -334,6 +346,19 @@ console.log(savedMudras,"savedmudras");
             }
           )}
         </ScrollView>
+      )}
+      {savedMudras.length > 1 && (
+        <View style={styles.carouselDotsRow}>
+          {savedMudras.map((_, i) => (
+            <View
+              key={i}
+              style={[
+                styles.carouselDot,
+                i === activeCardIndex && styles.carouselDotActive,
+              ]}
+            />
+          ))}
+        </View>
       )}
     </View>
   );

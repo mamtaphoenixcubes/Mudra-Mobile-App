@@ -6,8 +6,8 @@ import { useTheme } from '@/constants/ThemeContext'
 import FavouriteSvg from '@/assets/icons/Favourite.svg';
 
 export default function SavedTipBanner() {
-    const { colors } = useTheme()
-    const styles = getSavedStyles(colors)
+    const { colors, isDark } = useTheme();
+    const styles = getSavedStyles(colors, isDark);
     return (
         <View style={styles.tipContainer}>
             <View style={styles.tipCard}>

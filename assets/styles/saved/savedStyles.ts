@@ -6,7 +6,7 @@ const scale = (size: number) => (width / 375) * size;
 const moderateScale = (size: number, factor = 0.5) =>
     size + (scale(size) - size) * factor;
 
-export const getSavedStyles = (colors: typeof lightColors) =>
+export const getSavedStyles = (colors: typeof lightColors, isDark: boolean) =>
     StyleSheet.create({
 
         // ── Screen ───────────────────────────────────────────────────────────────
@@ -66,32 +66,65 @@ export const getSavedStyles = (colors: typeof lightColors) =>
 
         // ── Tab Selector ──────────────────────────────────────────────────────────
         tabContainer: {
-            marginHorizontal: moderateScale(16),
-            marginBottom: moderateScale(8),
+            marginBottom: moderateScale(20),
+        },
+        tabScrollContent: {
+            flexDirection: 'row',
+            paddingHorizontal: moderateScale(16),
+            gap: moderateScale(18),
+        },
+        tabItem: {
+            alignItems: 'center',
+            gap: moderateScale(6),
+            width: moderateScale(72),
+        },
+        tabIconCircle: {
+            width: moderateScale(44),
+            height: moderateScale(44),
+            borderRadius: moderateScale(22),
+            backgroundColor: '#F0F0F0',
+            alignItems: 'center',
+            justifyContent: 'center',
+        },
+        tabIconCircleActive: {
+            backgroundColor: colors.primary,
+        },
+        tabText: {
+            fontFamily: 'SF-Pro-Display',
+            fontSize: moderateScale(12),
+            fontWeight: '500',
+            color: colors.textSub,
+            textAlign: 'center',
+        },
+        tabTextActive: {
+            fontWeight: '700',
+            color: colors.primary,
+        },
+
+        // ── Simple 2-tab pill (used by SavedEmptyScreen) ──────────────────────────
+        simpleTabContainer: {
             backgroundColor: colors.primary,
             borderRadius: moderateScale(10),
             flexDirection: 'row',
             padding: moderateScale(4),
         },
-        tabItem: {
+        simpleTabItem: {
             flex: 1,
             paddingVertical: moderateScale(12),
             alignItems: 'center',
             justifyContent: 'center',
             borderRadius: moderateScale(8),
-            flexDirection: 'row',
-            gap: moderateScale(6),
         },
-        tabItemActive: {
+        simpleTabItemActive: {
             backgroundColor: '#FFFFFF',
         },
-        tabText: {
+        simpleTabText: {
             fontFamily: 'SF-Pro-Display',
             fontWeight: '500',
             fontSize: moderateScale(14),
             color: '#FFFFFF',
         },
-        tabTextActive: {
+        simpleTabTextActive: {
             color: '#0F0F0F',
         },
 
@@ -191,6 +224,24 @@ export const getSavedStyles = (colors: typeof lightColors) =>
             fontWeight: '500',
             fontSize: moderateScale(11),
             color: '#00000080',
+        },
+
+        carouselDotsRow: {
+            flexDirection: 'row',
+            justifyContent: 'center',
+            alignItems: 'center',
+            gap: moderateScale(5),
+            marginTop: moderateScale(10),
+        },
+        carouselDot: {
+            width: moderateScale(5),
+            height: moderateScale(5),
+            borderRadius: moderateScale(2.5),
+            backgroundColor: isDark ? 'rgba(255,255,255,0.2)' : '#D9D9D9',
+        },
+        carouselDotActive: {
+            width: moderateScale(14),
+            backgroundColor: isDark ? colors.text : '#0F0F0FCC',
         },
 
         // ── Sessions List ─────────────────────────────────────────────────────────

@@ -18,61 +18,61 @@ interface SavedSessionsSectionProps {
 export default function SavedSessionsSection({
   mudras = [],
 }: SavedSessionsSectionProps) {
-  const { colors } = useTheme();
-  const styles = getSavedStyles(colors);
+  const { colors, isDark } = useTheme();
+  const styles = getSavedStyles(colors, isDark);
 
   // Support Audio, Audio Playlist, Video, Video Playlist
- const [savedSessions, setSavedSessions] = useState(mudras);
+  const [savedSessions, setSavedSessions] = useState(mudras);
 
-useEffect(() => {
-  setSavedSessions(mudras);
-}, [mudras]);
+  useEffect(() => {
+    setSavedSessions(mudras);
+  }, [mudras]);
 
-const { token, user} = useAuthStore();
- const profileDocumentId = user?.id;
-const sessions = savedSessions.filter(
-  (item) =>
-    item.playlist ||
-    item.audio ||
-    item.video ||
-    item.videoPlaylist
-);
+  const { token, user } = useAuthStore();
+  const profileDocumentId = user?.id;
+  const sessions = savedSessions.filter(
+    (item) =>
+      item.playlist ||
+      item.audio ||
+      item.video ||
+      item.videoPlaylist
+  );
 
-const [savingId, setSavingId] = useState<string | null>(null);
+  const [savingId, setSavingId] = useState<string | null>(null);
 
-const handleSaveMudra = async (mudraId: string) => {
-  if (!profileDocumentId || savingId === mudraId) return;
+  const handleSaveMudra = async (mudraId: string) => {
+    if (!profileDocumentId || savingId === mudraId) return;
 
-  try {
-    setSavingId(mudraId);
+    try {
+      setSavingId(mudraId);
 
-    await axios.post(
-      `${process.env.EXPO_PUBLIC_API_URL}/mudras/${mudraId}/save`,
-      {
-        profileDocumentId,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
+      await axios.post(
+        `${process.env.EXPO_PUBLIC_API_URL}/mudras/${mudraId}/save`,
+        {
+          profileDocumentId,
         },
-      }
-    );
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
-    // Remove from saved list after unsaving
-    setSavedSessions((prev) =>
-      prev.filter(
-        (item) => item.mudra?.documentId !== mudraId
-      )
-    );
-  } catch (error: any) {
-    console.log(
-      'SAVE_MUDRA_ERROR',
-      error?.response?.data || error
-    );
-  } finally {
-    setSavingId(null);
-  }
-};
+      // Remove from saved list after unsaving
+      setSavedSessions((prev) =>
+        prev.filter(
+          (item) => item.mudra?.documentId !== mudraId
+        )
+      );
+    } catch (error: any) {
+      console.log(
+        'SAVE_MUDRA_ERROR',
+        error?.response?.data || error
+      );
+    } finally {
+      setSavingId(null);
+    }
+  };
 
   return (
     <View style={styles.sessionsContainer}>
@@ -81,7 +81,7 @@ const handleSaveMudra = async (mudraId: string) => {
           Saved Mudra Sessions
         </Text>
 
-       
+
       </View>
 
       <View style={styles.sessionsCard}>
@@ -124,16 +124,16 @@ const handleSaveMudra = async (mudraId: string) => {
             const type = playlist
               ? 'playlist'
               : audio
-              ? 'audio'
-              : videoPlaylist
-              ? 'videoPlaylist'
-              : 'video';
+                ? 'audio'
+                : videoPlaylist
+                  ? 'videoPlaylist'
+                  : 'video';
 
             const imageUrl = session?.thumbnail?.url
               ? `${process.env.EXPO_PUBLIC_IMAGE_API_URL}${session.thumbnail.url}`
               : mudra?.thumbnail?.url
-              ? `${process.env.EXPO_PUBLIC_IMAGE_API_URL}${mudra.thumbnail.url}`
-              : null;
+                ? `${process.env.EXPO_PUBLIC_IMAGE_API_URL}${mudra.thumbnail.url}`
+                : null;
 
             const title =
               session?.title || mudra?.name || '';
@@ -161,8 +161,8 @@ const handleSaveMudra = async (mudraId: string) => {
               case 'video':
                 duration = session?.durationInSeconds
                   ? `${Math.floor(
-                      session.durationInSeconds / 60
-                    )} min`
+                    session.durationInSeconds / 60
+                  )} min`
                   : '1 Track';
                 break;
             }
@@ -171,10 +171,10 @@ const handleSaveMudra = async (mudraId: string) => {
               type === 'playlist'
                 ? 'Mudra Playlist'
                 : type === 'audio'
-                ? 'Mudra Audio'
-                : type === 'videoPlaylist'
-                ? 'Video Playlist'
-                : 'Mudra Video';
+                  ? 'Mudra Audio'
+                  : type === 'videoPlaylist'
+                    ? 'Video Playlist'
+                    : 'Mudra Video';
 
             return (
               <React.Fragment
@@ -232,7 +232,7 @@ const handleSaveMudra = async (mudraId: string) => {
                   <View
                     style={styles.sessionActions}
                   >
-                   <TouchableOpacity
+                    <TouchableOpacity
                       disabled={savingId === mudra.documentId}
                       onPress={() =>
                         handleSaveMudra(mudra.documentId)

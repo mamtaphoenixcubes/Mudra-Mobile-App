@@ -135,7 +135,7 @@ const styles = StyleSheet.create({
     },
     title: {
         fontFamily: 'SF-Pro-Display',
-        fontWeight: '700',
+        fontWeight: '600',
         fontSize: moderateScale(20),
         marginBottom: moderateScale(4),
     },
