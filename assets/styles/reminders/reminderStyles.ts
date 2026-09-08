@@ -256,7 +256,7 @@ export const getReminderStyles = (colors: typeof lightColors) =>
         },
         pageTitle: {
             fontFamily: 'SF-Pro-Display',
-            fontWeight: '600',
+            fontWeight: '700',
             fontSize: moderateScale(20),
             color: colors.text,
             textAlign: 'center',

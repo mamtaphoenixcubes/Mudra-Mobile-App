@@ -556,7 +556,7 @@ const styles = StyleSheet.create({
     },
     pageTitle: {
         fontFamily: 'SF-Pro-Display',
-        fontWeight: '600',
+        fontWeight: '700',
         fontSize: moderateScale(19),
         textAlign: 'center',
         paddingHorizontal: moderateScale(24),

@@ -22,27 +22,27 @@ export default function HeroCard({
     isFavorite,
     onFavoriteToggle,
 }: Props) {
-    const { colors } = useTheme()
+    const { colors, isDark } = useTheme()
     const styles = getMudraOfTheDayStyles(colors)
 
-  const handleHeart = () => {
-    onFavoriteToggle?.();
-};
-console.log(isFavorite,"isFavorite");
+    const handleHeart = () => {
+        onFavoriteToggle?.();
+    };
+    console.log(isFavorite, "isFavorite");
 
     return (
         <View style={styles.heroCard}>
-                <TouchableOpacity
-            style={styles.heroHeartBtn}
-            onPress={handleHeart}
-            hitSlop={8}
-        >
-            <Ionicons
-                name={isFavorite ? 'heart' : 'heart-outline'}
-                size={22}
-                color={isFavorite ? '#FF3B30' : '#FFFFFF'}
-            />
-        </TouchableOpacity>
+            <TouchableOpacity
+                style={styles.heroHeartBtn}
+                onPress={handleHeart}
+                hitSlop={8}
+            >
+                <Ionicons
+                    name={isFavorite ? 'heart' : 'heart-outline'}
+                    size={22}
+                    color={isFavorite ? '#FF3B30' : (isDark ? '#FFFFFF' : colors.text)}
+                />
+            </TouchableOpacity>
 
             <View style={[styles.heroImageWrapper, { width: IMAGE_SIZE, height: IMAGE_SIZE, borderRadius: IMAGE_SIZE / 2 }]}>
                 {imageUri ? (

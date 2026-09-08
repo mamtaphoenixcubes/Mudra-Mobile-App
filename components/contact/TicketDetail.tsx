@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+
 import {
     View,
     Text,
@@ -9,96 +10,154 @@ import {
     Platform,
     ActivityIndicator,
 } from 'react-native';
+
 import { Ionicons } from '@expo/vector-icons';
+import { useLocalSearchParams } from 'expo-router';
+
 import { useTheme } from '@/constants/ThemeContext';
 import { getTicketDetailStyles } from '@/assets/styles/contact/ticketDetailStyles';
 import AppHeader from '@/components/common/AppHeader';
 
+import { useAuthStore } from '@/store/authStore';
+
+import {
+    useContactStore,
+} from '@/store/contactStore';
 
 
-// TEMP: preview-only mock data — remove once real submission is wired up
-const MOCK_SUBMISSION: TicketSubmission = {
-    id: 'mock-1',
-    subject: 'Issue with meditation session',
-    message: 'I am unable to start the meditation session from the mobile application.',
-    time: '10:24 AM',
-    status: 'open',
-    replies: [
-        {
-            id: 'reply-1',
-            sender: 'support',
-            text: 'Hi, thanks for reaching out — could you tell us which device and app version you\'re on?',
-            time: '10:41 AM',
-        },
-    ],
-};
-
-
-type TicketReply = {
-    id: string;
-    sender: 'user' | 'support';
-    text: string;
-    time: string;
-};
-
-type TicketSubmission = {
-    id: string;
-    subject: string;
-    message: string;
-    time: string;
-    status: 'open' | 'resolved';
-    replies: TicketReply[];
-};
-
-interface TicketDetailProps {
-    submission: TicketSubmission | null;
-    loading?: boolean;
-    onSendFollowUp?: (text: string) => void;
-    sending?: boolean;
-}
-
-export default function TicketDetail({
-    submission: incomingSubmission,
-    loading = false,
-    onSendFollowUp,
-    sending = false,
-}: TicketDetailProps) {
+export default function TicketDetail() {
     const { colors } = useTheme();
+
     const styles = getTicketDetailStyles(colors);
 
-    const [submission, setSubmission] = useState(incomingSubmission ?? MOCK_SUBMISSION);
+    const {
+        ticketId,
+    } = useLocalSearchParams<{
+        ticketId: string;
+    }>();
+
+    const { user } = useAuthStore();
+
+    const email = user?.email;
+
+    const {
+        selectedTicket,
+        loadingTicket,
+        sendingReply,
+        fetchTicketMessages,
+        sendReply,
+    } = useContactStore();
 
     const [draft, setDraft] = useState('');
 
 
+    // --------------------------------------------------
+    // Fetch ticket messages
+    // --------------------------------------------------
 
-    const handleSend = () => {
+    useEffect(() => {
+        if (!ticketId || !email) {
+            return;
+        }
+
+        fetchTicketMessages(
+            ticketId,
+            email
+        );
+    }, [
+        ticketId,
+        email,
+    ]);
+
+
+    // --------------------------------------------------
+    // Send reply
+    // --------------------------------------------------
+
+    const handleSend = async () => {
         const trimmed = draft.trim();
-        // if (!trimmed || !onSendFollowUp) return;
-        if (!trimmed) return;
 
-        handleFollowUp(trimmed);
+        if (
+            !trimmed ||
+            !ticketId ||
+            !email ||
+            selectedTicket?.status === 'resolved' ||
+            sendingReply
+        ) {
+            return;
+        }
+
+        const success = await sendReply(
+            ticketId,
+            {
+                email,
+                message: trimmed,
+
+                senderName: user?.firstName
+                    ? `${user.firstName} ${user.lastName ?? ''}`.trim()
+                    : 'User',
+
+                senderUid: user?.id,
+            }
+        );
+
+        if (!success) {
+            return;
+        }
+
         setDraft('');
+
+        /*
+         * Reload the conversation so the newly
+         * sent reply appears in the existing UI.
+         */
+        await fetchTicketMessages(
+            ticketId,
+            email
+        );
     };
 
-    if (loading) {
+
+    // --------------------------------------------------
+    // Loading state
+    // --------------------------------------------------
+
+    if (loadingTicket) {
         return (
             <View style={styles.container}>
                 <AppHeader />
+
                 <View style={styles.centerState}>
-                    <ActivityIndicator size="small" color={colors.primary} />
-                    <Text style={styles.emptyStateText}>Loading your message…</Text>
+                    <ActivityIndicator
+                        size="small"
+                        color={colors.primary}
+                    />
+
+                    <Text style={styles.emptyStateText}>
+                        Loading your message…
+                    </Text>
                 </View>
             </View>
         );
     }
 
-    if (!submission) {
+
+    // --------------------------------------------------
+    // Ticket not found
+    // --------------------------------------------------
+
+    if (!selectedTicket) {
         return (
             <View style={styles.container}>
                 <AppHeader />
+
                 <View style={styles.centerState}>
-                    <Ionicons name="mail-outline" size={32} color={colors.textSub} />
+                    <Ionicons
+                        name="mail-outline"
+                        size={32}
+                        color={colors.textSub}
+                    />
+
                     <Text style={styles.emptyStateText}>
                         We couldn't find this message.
                     </Text>
@@ -107,144 +166,255 @@ export default function TicketDetail({
         );
     }
 
-    const handleFollowUp = onSendFollowUp ?? ((text: string) => {
-        setSubmission((prev) => ({
-            ...prev,
-            replies: [
-                ...prev.replies,
-                {
-                    id: `mock-reply-${Date.now()}`,
-                    sender: 'user',
-                    text,
-                    time: 'Just now',
-                },
-            ],
-        }));
-    });
+
+    // --------------------------------------------------
+    // Existing UI
+    // --------------------------------------------------
 
     return (
         <KeyboardAvoidingView
             style={styles.container}
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+            behavior={
+                Platform.OS === 'ios'
+                    ? 'padding'
+                    : 'height'
+            }
+            keyboardVerticalOffset={
+                Platform.OS === 'ios'
+                    ? 90
+                    : 0
+            }
         >
             <AppHeader />
 
             <ScrollView
                 showsVerticalScrollIndicator={false}
-                contentContainerStyle={styles.scrollContent}
+                contentContainerStyle={
+                    styles.scrollContent
+                }
             >
                 <View style={styles.contentWrapper}>
+
+                    {/* Subject */}
+
                     <View style={styles.subjectSection}>
-                        <Text style={styles.eyebrow}>YOUR MESSAGE</Text>
-                        <Text style={styles.subjectTitle}>{submission.subject}</Text>
+                        <Text style={styles.eyebrow}>
+                            YOUR MESSAGE
+                        </Text>
+
+                        <Text style={styles.subjectTitle}>
+                            {selectedTicket.subject}
+                        </Text>
+
                         <View style={styles.accentBar} />
+
                         <Text style={styles.statusText}>
-                            {submission.status === 'resolved' ? 'Resolved' : 'Open'}
+                            {selectedTicket.status === 'resolved'
+                                ? 'Resolved'
+                                : 'Open'}
                         </Text>
                     </View>
 
+
+                    {/* Conversation */}
+
                     <View style={styles.threadSection}>
+
                         {/* Original message */}
+
                         <View style={styles.messageCard}>
                             <View style={styles.messageHeaderRow}>
+
                                 <View
                                     style={[
                                         styles.avatarCircle,
-                                        { backgroundColor: '#CBECFF' },
+                                        {
+                                            backgroundColor:
+                                                '#CBECFF',
+                                        },
                                     ]}
                                 >
-                                    <Ionicons name="person-outline" size={15} color="#5A9BC4" />
+                                    <Ionicons
+                                        name="person-outline"
+                                        size={15}
+                                        color="#5A9BC4"
+                                    />
                                 </View>
+
                                 <View>
-                                    <Text style={styles.senderName}>You</Text>
-                                    <Text style={styles.senderTime}>Sent {submission.time}</Text>
+                                    <Text
+                                        style={
+                                            styles.senderName
+                                        }
+                                    >
+                                        You
+                                    </Text>
+
+                                    <Text
+                                        style={
+                                            styles.senderTime
+                                        }
+                                    >
+                                        Sent {selectedTicket.time}
+                                    </Text>
                                 </View>
+
                             </View>
-                            <Text style={styles.messageBody}>{submission.message}</Text>
+
+                            <Text
+                                style={styles.messageBody}
+                            >
+                                {selectedTicket.message}
+                            </Text>
                         </View>
 
+
                         {/* Replies */}
-                        {submission.replies.map((reply) => (
-                            <View
-                                key={reply.id}
-                                style={
-                                    reply.sender === 'support'
-                                        ? styles.replyCard
-                                        : styles.messageCard
-                                }
-                            >
-                                <View style={styles.messageHeaderRow}>
+
+                        {selectedTicket.replies.map(
+                            (reply) => (
+                                <View
+                                    key={reply.id}
+                                    style={
+                                        reply.sender ===
+                                            'support'
+                                            ? styles.replyCard
+                                            : styles.messageCard
+                                    }
+                                >
+
                                     <View
-                                        style={[
-                                            styles.avatarCircle,
-                                            {
-                                                backgroundColor:
-                                                    reply.sender === 'support'
-                                                        ? '#E9D9FF'
-                                                        : '#CBECFF',
-                                            },
-                                        ]}
+                                        style={
+                                            styles.messageHeaderRow
+                                        }
                                     >
-                                        <Ionicons
-                                            name={
-                                                reply.sender === 'support'
-                                                    ? 'headset-outline'
-                                                    : 'person-outline'
-                                            }
-                                            size={15}
-                                            color={
-                                                reply.sender === 'support' ? '#9A85FE' : '#5A9BC4'
-                                            }
-                                        />
+
+                                        <View
+                                            style={[
+                                                styles.avatarCircle,
+                                                {
+                                                    backgroundColor:
+                                                        reply.sender ===
+                                                            'support'
+                                                            ? '#E9D9FF'
+                                                            : '#CBECFF',
+                                                },
+                                            ]}
+                                        >
+                                            <Ionicons
+                                                name={
+                                                    reply.sender ===
+                                                        'support'
+                                                        ? 'headset-outline'
+                                                        : 'person-outline'
+                                                }
+                                                size={15}
+                                                color={
+                                                    reply.sender ===
+                                                        'support'
+                                                        ? '#9A85FE'
+                                                        : '#5A9BC4'
+                                                }
+                                            />
+                                        </View>
+
+                                        <View>
+                                            <Text
+                                                style={
+                                                    styles.senderName
+                                                }
+                                            >
+                                                {reply.sender ===
+                                                    'support'
+                                                    ? 'Mudras Support'
+                                                    : 'You'}
+                                            </Text>
+
+                                            <Text
+                                                style={
+                                                    styles.senderTime
+                                                }
+                                            >
+                                                Replied {reply.time}
+                                            </Text>
+                                        </View>
+
                                     </View>
-                                    <View>
-                                        <Text style={styles.senderName}>
-                                            {reply.sender === 'support' ? 'Mudras Support' : 'You'}
-                                        </Text>
-                                        <Text style={styles.senderTime}>
-                                            Replied {reply.time}
-                                        </Text>
-                                    </View>
+
+                                    <Text
+                                        style={
+                                            styles.messageBody
+                                        }
+                                    >
+                                        {reply.text}
+                                    </Text>
+
                                 </View>
-                                <Text style={styles.messageBody}>{reply.text}</Text>
-                            </View>
-                        ))}
+                            )
+                        )}
+
                     </View>
                 </View>
             </ScrollView>
 
-            {/* {handleFollowUp && ( */}
-            <View style={styles.composerWrapper}>
-                <View style={styles.contentWrapper}>
-                    <View style={styles.composerRow}>
-                        <TextInput
-                            value={draft}
-                            onChangeText={setDraft}
-                            placeholder="Write a follow-up…"
-                            placeholderTextColor={colors.textSub}
-                            style={styles.composerInput}
-                            multiline
-                        />
-                        <TouchableOpacity
-                            style={[
-                                styles.sendCircle,
-                                (!draft.trim() || sending) && styles.sendCircleDisabled,
-                            ]}
-                            activeOpacity={0.85}
-                            onPress={handleSend}
-                            disabled={!draft.trim() || sending}
-                        >
-                            {sending ? (
-                                <ActivityIndicator size="small" color="#FFFFFF" />
-                            ) : (
-                                <Ionicons name="send" size={14} color="#FFFFFF" />
-                            )}
-                        </TouchableOpacity>
+
+            {/* Composer — hidden once the ticket is resolved */}
+
+            {selectedTicket.status !== 'resolved' && (
+
+                <View style={styles.composerWrapper}>
+                    <View style={styles.contentWrapper}>
+
+                        <View style={styles.composerRow}>
+
+                            <TextInput
+                                value={draft}
+                                onChangeText={setDraft}
+                                placeholder="Write a follow-up…"
+                                placeholderTextColor={
+                                    colors.textSub
+                                }
+                                style={
+                                    styles.composerInput
+                                }
+                                multiline
+                            />
+
+                            <TouchableOpacity
+                                style={[
+                                    styles.sendCircle,
+                                    (
+                                        !draft.trim() ||
+                                        sendingReply
+                                    ) &&
+                                    styles.sendCircleDisabled,
+                                ]}
+                                activeOpacity={0.85}
+                                onPress={handleSend}
+                                disabled={
+                                    !draft.trim() ||
+                                    sendingReply
+                                }
+                            >
+                                {sendingReply ? (
+                                    <ActivityIndicator
+                                        size="small"
+                                        color="#FFFFFF"
+                                    />
+                                ) : (
+                                    <Ionicons
+                                        name="send"
+                                        size={14}
+                                        color="#FFFFFF"
+                                    />
+                                )}
+                            </TouchableOpacity>
+
+                        </View>
                     </View>
                 </View>
-            </View>
-            {/* )} */}
+            )}
+
         </KeyboardAvoidingView>
     );
 }

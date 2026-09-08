@@ -111,6 +111,7 @@ export default function RootLayout() {
 
               <Stack.Screen name="contactus" options={{ headerShown: false }} />
               <Stack.Screen name="ticketdetail" options={{ headerShown: false }} />
+              <Stack.Screen name="ticketlist" options={{ headerShown: false }} />
 
 
             </Stack>

@@ -24,6 +24,7 @@ import ArrowLeftWhite from '@/assets/icons/arrow-left white.svg';
 import FavouriteWhite from '@/assets/icons/FavouriteWhite.svg';
 import ShareWhite from '@/assets/icons/shareWhite.svg';
 import FavouriteFilled from '@/assets/icons/FavouriteFilled.svg';
+import AppHeader from '@/components/common/AppHeader';
 
 interface Props {
     nidra: any;
@@ -93,46 +94,74 @@ export default function NidraDetailHeader({ nidra }: Props) {
     };
 
     return (
-        <View
-            style={[
-                styles.header,
-                {
-                    paddingTop: insets.top + 8,
-                },
-            ]}
-        >
-            <TouchableOpacity
-                style={styles.headerIconBtn}
-                onPress={() => router.back()}
+        // <View
+        //     style={[
+        //         styles.header,
+        //         {
+        //             paddingTop: insets.top + 8,
+        //         },
+        //     ]}
+        // >
+        //     <TouchableOpacity
+        //         style={styles.headerIconBtn}
+        //         onPress={() => router.back()}
+        //     >
+        //         {isDark ? (
+        //             <ArrowLeftWhite width={24} height={24} />
+        //         ) : (
+        //             <ArrowLeft width={24} height={24} />
+        //         )}
+        //     </TouchableOpacity>
+
+        //     <View style={styles.headerCenter}>
+        //         <Image
+        //             source={require('@/assets/images/Pranayama_Images/MudraImage.png')}
+        //             style={styles.headerLogo}
+        //             resizeMode="contain"
+        //         />
+        //         <Text style={styles.headerTitle}>MUDRAS</Text>
+        //     </View>
+
+        //     <View style={styles.headerRightRow}>
+        //         <TouchableOpacity
+        //             style={styles.headerIconBtn}
+        //             onPress={handleLike}
+        //         >
+        //             {liked ? (
+        //                 <FavouriteFilled width={28} height={28} />
+        //             ) : isDark ? (
+        //                 <FavouriteWhite width={22} height={22} />
+        //             ) : (
+        //                 <FavouriteSvg width={22} height={22} />
+        //             )}
+        //         </TouchableOpacity>
+
+        //         <TouchableOpacity
+        //             style={styles.headerIconBtn}
+        //             onPress={handleShare}
+        //         >
+        //             {isDark ? (
+        //                 <ShareWhite width={22} height={22} />
+        //             ) : (
+        //                 <ShareSvg width={22} height={22} />
+        //             )}
+        //         </TouchableOpacity>
+        //     </View>
+        // </View>
+        <View style={{ position: 'relative' }}>
+            <AppHeader onBackPress={() => router.back()} />
+
+            <View
+                style={[
+                    styles.headerRightRow,
+                    {
+                        position: 'absolute',
+                        top: insets.top + 8,
+                        right: 0,
+                        bottom: 0,
+                    },
+                ]}
             >
-                {isDark ? (
-                    <ArrowLeftWhite width={24} height={24} />
-                ) : (
-                    <ArrowLeft width={24} height={24} />
-                )}
-            </TouchableOpacity>
-
-            <View style={styles.headerCenter}>
-                <Image
-                    source={require('@/assets/images/Pranayama_Images/MudraImage.png')}
-                    style={styles.headerLogo}
-                    resizeMode="contain"
-                />
-                <Text style={styles.headerTitle}>MUDRAS</Text>
-            </View>
-
-            <View style={styles.headerRightRow}>
-                {/* <TouchableOpacity
-                    style={styles.headerIconBtn}
-                    onPress={handleLike}
-                >
-                    <FavouriteSvg
-                        width={22}
-                        height={22}
-                        fill={liked ? '#FF3B30' : 'none'}
-                        stroke={liked ? '#FF3B30' : 'none'}
-                    />
-                </TouchableOpacity> */}
                 <TouchableOpacity
                     style={styles.headerIconBtn}
                     onPress={handleLike}

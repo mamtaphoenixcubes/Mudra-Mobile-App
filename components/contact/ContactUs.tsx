@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     View,
     Text,
@@ -13,6 +13,7 @@ import { useTheme } from '@/constants/ThemeContext';
 import { getContactStyles } from '@/assets/styles/contact/contactStyles';
 import AppHeader from '@/components/common/AppHeader';
 import { useContactStore } from '@/store/contactStore';
+import { useAuthStore } from '@/store/authStore';
 
 type FeatureItem = {
     id: string;
@@ -61,15 +62,32 @@ const FEATURES: FeatureItem[] = [
 export default function ContactUs() {
     const { colors } = useTheme();
     const styles = getContactStyles(colors);
+    const { user } = useAuthStore();
 
-    const [firstName, setFirstName] = useState('');
-    const [lastName, setLastName] = useState('');
-    const [phone, setPhone] = useState('');
-    const [email, setEmail] = useState('');
+    const [firstName, setFirstName] = useState(user?.fullName ?? '');
+    const [lastName, setLastName] = useState(user?.username ?? '');
+    const [phone, setPhone] = useState(user?.phone ?? '');
+    const [email, setEmail] = useState(user?.email ?? '');
     const [subject, setSubject] = useState('');
     const [message, setMessage] = useState('');
 
+
+
     const { submitContact, submitting, error, success } = useContactStore();
+    const resetContactState = useContactStore((s) => s.resetContactState);
+
+
+    useEffect(() => {
+        if (!user) return;
+        setFirstName((prev) => prev || user.fullName || '');
+        setLastName((prev) => prev || user.username || '');
+        setPhone((prev) => prev || user.phone || '');
+        setEmail((prev) => prev || user.email || '');
+    }, [user]);
+
+    useEffect(() => {
+        resetContactState();
+    }, [])
 
     const handleSend = async () => {
         const ok = await submitContact({

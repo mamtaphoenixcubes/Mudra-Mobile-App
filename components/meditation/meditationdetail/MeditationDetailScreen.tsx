@@ -39,5 +39,10 @@ export default function MeditationDetailScreen() {
 
 const styles = StyleSheet.create({
     container: { flex: 1 },
-    pageTitle: { fontFamily: 'SF-Pro-Display', fontWeight: '600', fontSize: 20, textAlign: 'center', paddingHorizontal: 16, paddingVertical: 8 },
+    pageTitle: { fontFamily: 'SF-Pro-Display', 
+        fontWeight: '700', 
+        fontSize: 20,
+         textAlign: 'center',
+          paddingHorizontal: 16, 
+          paddingVertical: 8 },
 });

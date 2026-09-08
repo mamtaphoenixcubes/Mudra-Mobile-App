@@ -57,7 +57,7 @@ export default function SlideMenu({ visible, onClose }: SlideMenuProps) {
             // { id: 'meditation', title: 'Meditation', icon: 'leaf-outline', route: '/meditation' },
 
             //{ id: 'savedempty', title: 'Saved Empty', icon: 'heart-outline', route: '/savedempty' },
-            { id: 'ticketdetail', title: 'Ticket Replies', icon: 'mail-outline', route: '/ticketdetail' },
+            { id: 'ticketlist', title: 'Ticket Replies', icon: 'mail-outline', route: '/ticketlist' },
 
             { id: 'subscription', title: 'Subscription / Premium', icon: 'star-outline', route: '/subscription' },
         ] as MenuItem[],

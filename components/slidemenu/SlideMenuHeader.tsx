@@ -44,7 +44,10 @@ export default function SlideMenuHeader({
 
                     {/* Plain image — no avatar circle */}
                     <Image
-                        source={require('@/assets/images/Pranayama_Images/MudraImage.png')}
+                        // source={require('@/assets/images/Pranayama_Images/MudraImage.png')}
+                        source={require('@/assets/images/tabIcons/lotus.png')}
+
+
                         style={styles.heroImage}
                         resizeMode="contain"
                     />

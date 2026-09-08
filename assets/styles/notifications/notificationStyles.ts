@@ -210,7 +210,7 @@ export const getNotificationStyles = (themeColors: typeof lightColors) =>
 
         pageTitle: {
             fontFamily: 'SF-Pro-Display',
-            fontWeight: '600',
+            fontWeight: '700',
             fontSize: 20,
             color: themeColors.text,
             textAlign: 'center',

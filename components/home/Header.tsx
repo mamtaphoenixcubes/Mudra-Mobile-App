@@ -42,7 +42,7 @@ export default function Header({ rightIcon, onRightPress }: Props) {
             style={styles.logo}
             resizeMode="contain"
           />
-          <Text style={styles.headerTitle}>{getTitle()}</Text>
+          {/* <Text style={styles.headerTitle}>{getTitle()}</Text> */}
         </View>
 
         <TouchableOpacity
@@ -84,8 +84,11 @@ const styles = StyleSheet.create({
     gap: moderateScale(8),
   },
   logo: {
-    width: moderateScale(30),
-    height: moderateScale(30),
+    // width: moderateScale(30),
+    // height: moderateScale(30),
+
+    width: moderateScale(36) * 4.29,
+    height: moderateScale(36),
   },
   headerTitle: {
     fontFamily: 'SF-Pro-Display',

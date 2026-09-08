@@ -1,15 +1,14 @@
 import React from 'react';
-import { View, Image, TouchableOpacity, Text } from 'react-native';
+import { View, TouchableOpacity } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getAsanaDetailStyles } from '@/assets/styles/asana/asanaDetailStyles';
 import { useTheme } from '@/constants/ThemeContext';
-import ArrowLeft from '@/assets/icons/arrow-left.svg';
-import ArrowLeftWhite from '@/assets/icons/arrow-left white.svg';
 import FavouriteSvg from '@/assets/icons/Favourite.svg';
 import FavouriteWhite from '@/assets/icons/FavouriteWhite.svg';
 import ShareSvg from '@/assets/icons/share.svg';
 import ShareWhite from '@/assets/icons/shareWhite.svg';
+import AppHeader from '@/components/common/AppHeader';
 
 export default function AsanaDetailHeader() {
     const insets = useSafeAreaInsets();
@@ -17,25 +16,20 @@ export default function AsanaDetailHeader() {
     const styles = getAsanaDetailStyles(colors);
 
     return (
-        <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
-            <TouchableOpacity
-                style={styles.headerIconBtn}
-                onPress={() => router.back()}
-                activeOpacity={0.7}
+        <View style={{ position: 'relative' }}>
+            <AppHeader onBackPress={() => router.back()} />
+
+            <View
+                style={[
+                    styles.headerRightRow,
+                    {
+                        position: 'absolute',
+                        top: insets.top + 8,
+                        right: 0,
+                        bottom: 0,
+                    },
+                ]}
             >
-                {isDark ? <ArrowLeftWhite width={24} height={24} /> : <ArrowLeft width={24} height={24} />}
-            </TouchableOpacity>
-
-            <View style={styles.headerCenter}>
-                <Image
-                    source={require('@/assets/images/Pranayama_Images/MudraImage.png')}
-                    style={styles.headerLogo}
-                    resizeMode="contain"
-                />
-                <Text style={styles.headerTitle}>MUDRAS</Text> 
-            </View>
-
-            <View style={styles.headerRightRow}>
                 <TouchableOpacity style={styles.headerIconBtn} activeOpacity={0.7}>
                     {isDark ? <FavouriteWhite width={22} height={22} /> : <FavouriteSvg width={22} height={22} />}
                 </TouchableOpacity>

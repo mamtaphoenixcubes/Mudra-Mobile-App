@@ -47,7 +47,7 @@ export default function AppHeader({ rightIcon, onRightPress, onBackPress }: Prop
                     style={styles.logo}
                     resizeMode="contain"
                 />
-                <Text style={styles.title}>MUDRAS</Text>
+                {/* <Text style={styles.title}>MUDRAS</Text> */}
             </View>
 
             {/* Right — optional icon */}
@@ -86,8 +86,10 @@ const styles = StyleSheet.create({
         gap: moderateScale(8),
     },
     logo: {
-        width: moderateScale(28),
-        height: moderateScale(28),
+        // width: moderateScale(28),
+        // height: moderateScale(28),
+        width: moderateScale(36) * 4.29,
+        height: moderateScale(36),
     },
     title: {
         fontFamily: 'SF-Pro-Display',

@@ -6,8 +6,6 @@ const scale = (size: number) => (width / 375) * size;
 const moderateScale = (size: number, factor = 0.5) =>
     size + (scale(size) - size) * factor;
 
-// Content is capped and centered past this width so it doesn't
-// stretch edge-to-edge on tablets / large screens.
 const MAX_CONTENT_WIDTH = 600;
 
 export const getTicketDetailStyles = (colors: typeof lightColors) =>
@@ -21,65 +19,69 @@ export const getTicketDetailStyles = (colors: typeof lightColors) =>
             paddingBottom: moderateScale(24),
         },
 
-        // ── Content wrapper (handles tablet/large-screen centering) ──────────────
         contentWrapper: {
             width: '100%',
             maxWidth: MAX_CONTENT_WIDTH,
             alignSelf: 'center',
         },
 
-        // ── Header / subject section ──────────────────────────────────────────────
         subjectSection: {
             paddingHorizontal: moderateScale(20),
             paddingTop: moderateScale(16),
+            paddingBottom: moderateScale(16),
+            borderBottomWidth: 1,
+            borderBottomColor: colors.border,
         },
         eyebrow: {
             fontFamily: 'SF-Pro-Display',
-            fontWeight: '600',
+            fontWeight: '700',
             fontSize: moderateScale(11),
-            letterSpacing: 1,
+            letterSpacing: moderateScale(1.4),
             color: colors.primary,
             marginBottom: moderateScale(6),
         },
         subjectTitle: {
             fontFamily: 'SF-Pro-Display',
-            fontWeight: '600',
-            fontSize: moderateScale(20),
+            fontWeight: '700',
+            fontSize: moderateScale(19),
             color: colors.text,
-            lineHeight: moderateScale(27),
+            lineHeight: moderateScale(26),
         },
         accentBar: {
-            width: moderateScale(36),
+            width: moderateScale(32),
             height: moderateScale(3),
             borderRadius: moderateScale(2),
             backgroundColor: colors.primary,
-            marginTop: moderateScale(12),
-            marginBottom: moderateScale(6),
+            marginTop: moderateScale(10),
+            marginBottom: moderateScale(8),
         },
         statusText: {
             fontFamily: 'SF-Pro-Display',
-            fontWeight: '500',
-            fontSize: moderateScale(12),
+            fontWeight: '600',
+            fontSize: moderateScale(11.5),
             color: colors.textSub,
-            marginBottom: moderateScale(8),
         },
 
-        // ── Message thread ───────────────────────────────────────────────────────
         threadSection: {
             paddingHorizontal: moderateScale(16),
-            paddingTop: moderateScale(8),
-            gap: moderateScale(14),
+            paddingTop: moderateScale(16),
+            gap: moderateScale(12),
         },
         messageCard: {
             backgroundColor: colors.card,
-            borderRadius: moderateScale(16),
+            borderRadius: moderateScale(18),
             borderWidth: 1,
             borderColor: colors.border,
             padding: moderateScale(14),
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.03,
+            shadowRadius: 6,
+            elevation: 1,
         },
         replyCard: {
             backgroundColor: colors.primaryMuted ?? colors.card,
-            borderRadius: moderateScale(16),
+            borderRadius: moderateScale(18),
             borderWidth: 1,
             borderColor: colors.primaryBorder ?? colors.border,
             padding: moderateScale(14),
@@ -87,20 +89,20 @@ export const getTicketDetailStyles = (colors: typeof lightColors) =>
         messageHeaderRow: {
             flexDirection: 'row',
             alignItems: 'center',
-            gap: moderateScale(8),
+            gap: moderateScale(10),
             marginBottom: moderateScale(8),
         },
         avatarCircle: {
-            width: moderateScale(30),
-            height: moderateScale(30),
-            borderRadius: moderateScale(15),
+            width: moderateScale(32),
+            height: moderateScale(32),
+            borderRadius: moderateScale(16),
             alignItems: 'center',
             justifyContent: 'center',
             flexShrink: 0,
         },
         senderName: {
             fontFamily: 'SF-Pro-Display',
-            fontWeight: '600',
+            fontWeight: '700',
             fontSize: moderateScale(13),
             color: colors.text,
         },
@@ -114,11 +116,10 @@ export const getTicketDetailStyles = (colors: typeof lightColors) =>
             fontFamily: 'SF-Pro-Display',
             fontWeight: '400',
             fontSize: moderateScale(13.5),
-            lineHeight: moderateScale(20),
+            lineHeight: moderateScale(20.5),
             color: colors.text,
         },
 
-        // ── Empty / loading states ───────────────────────────────────────────────
         centerState: {
             flex: 1,
             alignItems: 'center',
@@ -135,24 +136,29 @@ export const getTicketDetailStyles = (colors: typeof lightColors) =>
             marginTop: moderateScale(12),
         },
 
-        // ── Follow-up composer ────────────────────────────────────────────────────
         composerWrapper: {
             paddingHorizontal: moderateScale(16),
             paddingTop: moderateScale(12),
             paddingBottom: moderateScale(12),
+            backgroundColor: colors.background,
             borderTopWidth: 1,
             borderTopColor: colors.border,
         },
         composerRow: {
             flexDirection: 'row',
-            alignItems: 'center',
+            alignItems: 'flex-end',
             gap: moderateScale(10),
-            backgroundColor: colors.inputBg,
+            backgroundColor: colors.card,
             borderWidth: 1,
             borderColor: colors.border,
-            borderRadius: moderateScale(14),
+            borderRadius: moderateScale(20),
             paddingHorizontal: moderateScale(14),
             paddingVertical: moderateScale(6),
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.05,
+            shadowRadius: 8,
+            elevation: 2,
         },
         composerInput: {
             flex: 1,
@@ -163,12 +169,13 @@ export const getTicketDetailStyles = (colors: typeof lightColors) =>
             paddingVertical: moderateScale(8),
         },
         sendCircle: {
-            width: moderateScale(32),
-            height: moderateScale(32),
-            borderRadius: moderateScale(16),
+            width: moderateScale(34),
+            height: moderateScale(34),
+            borderRadius: moderateScale(17),
             backgroundColor: colors.primary,
             alignItems: 'center',
             justifyContent: 'center',
+            marginBottom: moderateScale(2),
         },
         sendCircleDisabled: {
             opacity: 0.5,
