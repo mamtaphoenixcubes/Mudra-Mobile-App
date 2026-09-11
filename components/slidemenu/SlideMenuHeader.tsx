@@ -4,7 +4,6 @@ import { getSlideMenuStyles } from '@/assets/styles/slidemenu/slideMenuStyles'
 import { useTheme } from '@/constants/ThemeContext'
 import { Ionicons } from '@expo/vector-icons';
 import Svg, { Path } from 'react-native-svg';
-// import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');

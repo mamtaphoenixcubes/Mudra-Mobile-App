@@ -15,13 +15,14 @@ const moderateScale = (size: number, factor = 0.5) => {
     return size + (s - size) * factor;
 };
 
-type ModalType = 'notification' | 'logout' | 'delete' | 'deletePlaylist' | 'deleteSessions' | 'profileDetails';
+type ModalType = 'notification' | 'logout' | 'delete' | 'deletePlaylist' | 'deleteSessions' | 'profileDetails' | 'paymentFailed';
 
 type Props = {
     visible: boolean;
     type: ModalType;
     onConfirm: () => void;
     onCancel: () => void;
+    bodyOverride?: string;
 };
 
 const MODAL_CONFIG = {
@@ -80,7 +81,7 @@ const MODAL_CONFIG = {
         confirmTextColor: '#FFFFFF',
         cancelBg: '#F3F3F3',
     },
-        profileDetails: {
+    profileDetails: {
         image: require('@/assets/images/Pranayama_Images/UserProfile.png'),
         imageStyle: { width: moderateScale(100), height: moderateScale(100), borderRadius: moderateScale(10) },
         title: 'A Little About You',
@@ -91,9 +92,20 @@ const MODAL_CONFIG = {
         confirmTextColor: '#FFFFFF',
         cancelBg: 'transparent',
     },
+    paymentFailed: {
+        image: require('@/assets/images/Pranayama_Images/PaymentFailed.png'),
+        imageStyle: { width: moderateScale(100), height: moderateScale(100) },
+        title: 'Payment Failed',
+        body: 'We could not process your payment. Please check your details and try again.',
+        confirmText: 'Try Again',
+        cancelText: 'Cancel',
+        confirmColor: '#9A85FE',
+        confirmTextColor: '#FFFFFF',
+        cancelBg: '#F3F3F3',
+    },
 };
 
-export default function ConfirmModal({ visible, type, onConfirm, onCancel }: Props) {
+export default function ConfirmModal({ visible, type, onConfirm, onCancel, bodyOverride }: Props) {
     const config = MODAL_CONFIG[type];
 
     return (
@@ -116,7 +128,8 @@ export default function ConfirmModal({ visible, type, onConfirm, onCancel }: Pro
                     <Text style={styles.title}>{config.title}</Text>
 
                     {/* Body */}
-                    <Text style={styles.body}>{config.body}</Text>
+                    {/* <Text style={styles.body}>{config.body}</Text> */}
+                    <Text style={styles.body}>{bodyOverride ?? config.body}</Text>
 
                     {/* Confirm Button */}
                     <TouchableOpacity

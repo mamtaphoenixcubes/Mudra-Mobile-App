@@ -60,6 +60,7 @@ export default function SlideMenu({ visible, onClose }: SlideMenuProps) {
             { id: 'ticketlist', title: 'Ticket Replies', icon: 'mail-outline', route: '/ticketlist' },
 
             { id: 'subscription', title: 'Subscription / Premium', icon: 'star-outline', route: '/subscription' },
+            { id: 'razorpay-test', title: 'Razorpay Test', icon: 'star-outline', route: '/razorpay-test' },
         ] as MenuItem[],
         discover: [
             { id: 'mudraday', title: 'Mudra of the Day', icon: 'flower-outline', route: '/mudraoftheday' },

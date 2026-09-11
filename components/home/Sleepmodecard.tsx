@@ -34,7 +34,7 @@ export default function SleepModeCard() {
                     <TouchableOpacity
                         style={styles.button}
                         activeOpacity={0.8}
-                        onPress={() => router.push('/sleepmode')}
+                        onPress={() => router.push('/(tabs)/nidra')}
                     >
                         <Text style={styles.buttonText}>Know More</Text>
                     </TouchableOpacity>

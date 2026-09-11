@@ -6,28 +6,42 @@ import AppHeader from '@/components/common/AppHeader';
 import PaymentModal from '@/components/common/PaymentModal';
 import { useTheme } from '@/constants/ThemeContext';
 import { getPlanDetailStyles } from '@/assets/styles/subscription/planDetailStyles';
+import { usePaymentStore } from '@/store/paymentStore';
 
 export default function PlanDetailScreen() {
     const { colors } = useTheme();
     const styles = getPlanDetailStyles(colors);
     const [paymentModalVisible, setPaymentModalVisible] = useState(false);
 
-    const { name, price, period, billing, features, isMostPopular } = useLocalSearchParams<{
+    const { name, price, period, billing, features, isMostPopular, planDocumentId, planType } = useLocalSearchParams<{
         name: string;
         price: string;
         period?: string;
         billing: string;
-        features: string; // JSON-stringified string[] — route params are strings only
+        features: string;
         isMostPopular?: string;
+        planDocumentId: string;
+        planCode?: string;
+        planType?: string;
     }>();
 
     const featureList: string[] = features ? JSON.parse(features) : [];
 
     const handlePaymentSuccess = () => {
         setPaymentModalVisible(false);
-        // TODO: navigate to a real success screen / update subscribed state
-        // once the backend confirms the subscription.
-        router.back();
+        const result = usePaymentStore.getState().lastResult;
+        router.push({
+            pathname: '/invoice',
+            params: {
+                planName: name,
+                price,
+                billing,
+                paymentId: result?.razorpayPaymentId,
+                transactionId: result?.paymentTransactionDocumentId,
+                paidAt: new Date().toISOString(),
+                paymentMethod: 'Razorpay',
+            },
+        });
     };
 
     return (
@@ -77,6 +91,8 @@ export default function PlanDetailScreen() {
                 planName={`${name} Plan`}
                 planPrice={price}
                 planBilling={billing}
+                planDocumentId={planDocumentId}
+                billingType={planType === 'PREMIUM' || planType === 'PREMIUM_PLUS' ? 'MONTHLY' : (planType === 'LIFETIME' ? 'ONE_TIME' : 'FREE')}
                 onClose={() => setPaymentModalVisible(false)}
                 onSuccess={handlePaymentSuccess}
             />

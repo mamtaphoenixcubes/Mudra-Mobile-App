@@ -42,7 +42,7 @@ export default function IconPickerModal({ visible, selected, onSelect, onClose }
                 >
                     <View style={[styles.handle, { backgroundColor: colors.border }]} />
 
-                    <Text style={[styles.title, { color: colors.text }]}>Choose an Icon</Text>
+                    <Text style={[styles.title, { color: colors.text }]}>Choose Reminder Type</Text>
 
                     <View style={styles.grid}>
                         {REMINDER_ICON_OPTIONS.map((opt) => {
