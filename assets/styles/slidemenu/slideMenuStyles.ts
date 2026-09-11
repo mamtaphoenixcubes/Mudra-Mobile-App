@@ -51,7 +51,7 @@ export const getSlideMenuStyles = (colors: typeof lightColors) =>
 
         // ── Hero image (no avatar circle) ─────────────────────────────────────────
         heroImage: {
-            width: moderateScale(100),
+            width: moderateScale(130),
             height: moderateScale(100),
             marginBottom: moderateScale(14),
         },

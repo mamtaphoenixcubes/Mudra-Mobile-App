@@ -93,8 +93,8 @@ export default function TicketDetail() {
                 email,
                 message: trimmed,
 
-                senderName: user?.firstName
-                    ? `${user.firstName} ${user.lastName ?? ''}`.trim()
+                senderName: user?.fullName
+                    ? `${user.fullName}`.trim()
                     : 'User',
 
                 senderUid: user?.id,

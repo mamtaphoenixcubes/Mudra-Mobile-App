@@ -241,6 +241,29 @@ export const getSubscriptionStyles = (colors: typeof lightColors) =>
             lineHeight: moderateScale(18),
         },
 
+
+        planCtaBtn: {
+    marginTop: moderateScale(10),
+    borderRadius: moderateScale(10),
+    borderWidth: 1,
+    borderColor: colors.primary,
+    paddingVertical: moderateScale(10),
+    alignItems: 'center',
+},
+planCtaBtnSelected: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+},
+planCtaBtnText: {
+    fontFamily: 'SF-Pro-Display',
+    fontWeight: '600',
+    fontSize: moderateScale(12.5),
+    color: colors.primary,
+},
+planCtaBtnTextSelected: {
+    color: '#FFFFFF',
+},
+
         statsContainer: {
             paddingHorizontal: moderateScale(16),
             marginBottom: moderateScale(24),

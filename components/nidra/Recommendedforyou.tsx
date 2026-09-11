@@ -20,6 +20,7 @@ import { SvgUri } from 'react-native-svg';
 import { SvgXml } from 'react-native-svg';
 
 const { width } = Dimensions.get('window');
+const router = useRouter();
 
 type DifficultyLevel = 'Beginner' | 'Intermediate' | 'Advanced';
 
@@ -156,7 +157,7 @@ const SessionCard = ({ session, index }: CardProps) => {
     if (loggedIn) {
       try {
         // Call View API
-    // Call View API
+        // Call View API
         await axios.post(
           `${process.env.EXPO_PUBLIC_API_URL}/yoga-nidras/${session.id}/view`,
           {
@@ -285,8 +286,8 @@ const SessionCard = ({ session, index }: CardProps) => {
             <Svg width={14} height={14} viewBox="0 0 24 24">
               <Path
                 d="M5 3h14a1 1 0 0 1 1 1v17l-7-3-7 3V4a1 1 0 0 1 1-1z"
-                fill={saved ? '#9A85FE' : '#FFFFFF'}
-                stroke={saved ? '#9A85FE' : '#FFFFFF'}
+                fill={saved ? '#9A85FE' : 'transparent'}
+                stroke={saved ? '#9A85FE' : 'rgba(0,0,0,0.4)'}
                 strokeWidth="2"
                 strokeLinejoin="round"
               />
@@ -318,7 +319,7 @@ const CategoryRow = ({ item, isLast }: { item: Category; isLast: boolean }) => {
   const [imgError, setImgError] = React.useState(false);
   const { colors } = useTheme();
   const router = useRouter();
-const [svgXml, setSvgXml] = React.useState('');
+  const [svgXml, setSvgXml] = React.useState('');
   const handlePress = () => {
     router.push({
       pathname: '/categorydetail',
@@ -332,15 +333,15 @@ const [svgXml, setSvgXml] = React.useState('');
       },
     });
   };
-React.useEffect(() => {
-  if (item.mime?.includes('svg') && typeof item.icon === 'string') {
-    fetch(item.icon)
-      .then(res => res.text())
-      .then(setSvgXml)
-      .catch(console.error);
-  }
-}, [item.icon]);
-console.log(item);
+  React.useEffect(() => {
+    if (item.mime?.includes('svg') && typeof item.icon === 'string') {
+      fetch(item.icon)
+        .then(res => res.text())
+        .then(setSvgXml)
+        .catch(console.error);
+    }
+  }, [item.icon]);
+  console.log(item);
   return (
     <TouchableOpacity
       activeOpacity={0.75}
@@ -352,28 +353,28 @@ console.log(item);
       ]}
     >
       <View style={styles.categoryIconWrap}>
-       {item.icon && !imgError ? (
-  item.mime?.includes('svg') ? (
-    <SvgUri
-      width={32}
-      height={32}
-      uri={item.icon as string}
-    />
-  ) : (
-    <Image
-      source={
-        typeof item.icon === 'string'
-          ? { uri: item.icon }
-          : item.icon
-      }
-      style={styles.categoryIcon}
-      resizeMode="contain"
-      onError={() => setImgError(true)}
-    />
-  )
-) : (
-  <View style={styles.categoryIconFallback} />
-)}
+        {item.icon && !imgError ? (
+          item.mime?.includes('svg') ? (
+            <SvgUri
+              width={32}
+              height={32}
+              uri={item.icon as string}
+            />
+          ) : (
+            <Image
+              source={
+                typeof item.icon === 'string'
+                  ? { uri: item.icon }
+                  : item.icon
+              }
+              style={styles.categoryIcon}
+              resizeMode="contain"
+              onError={() => setImgError(true)}
+            />
+          )
+        ) : (
+          <View style={styles.categoryIconFallback} />
+        )}
       </View>
 
       <View style={styles.categoryTextBlock}>
@@ -428,49 +429,49 @@ export default function Recommendedforyou({
       item.user_yoga_nidra_activities?.[0]?.IsSaved ?? false,
   }));
 
- const browseCategories = [
-  ...(filters?.categories ?? []).map((category: any) => ({
-    id: category.documentId,
-    title: category.Name,
-    description: category.shortDescription ?? '',
-    practiceCount: category.nidraCount ?? 0,
-    icon: category.icon?.url
-      ? `${process.env.EXPO_PUBLIC_IMAGE_API_URL}${category.icon.url}`
-      : null,
-    mime: category.icon?.mime,
-  })),
+  const browseCategories = [
+    ...(filters?.categories ?? []).map((category: any) => ({
+      id: category.documentId,
+      title: category.Name,
+      description: category.shortDescription ?? '',
+      practiceCount: category.nidraCount ?? 0,
+      icon: category.icon?.url
+        ? `${process.env.EXPO_PUBLIC_IMAGE_API_URL}${category.icon.url}`
+        : null,
+      mime: category.icon?.mime,
+    })),
 
-  {
-    id: 'chakra',
-    title: 'Chakra',
-    description: 'Balance your energy centers.',
-    practiceCount:
-      filters?.chakras?.reduce(
-        (sum: number, item: any) => sum + item.count,
-        0
-      ) ?? 0,
-    icon: require('../../assets/images/CategoryIcon/Chakra.png'),
-  },
+    {
+      id: 'chakra',
+      title: 'Chakra',
+      description: 'Balance your energy centers.',
+      practiceCount:
+        filters?.chakras?.reduce(
+          (sum: number, item: any) => sum + item.count,
+          0
+        ) ?? 0,
+      icon: require('../../assets/images/CategoryIcon/Chakra.png'),
+    },
 
-  {
-    id: 'elemental',
-    title: 'Elemental',
-    description: 'Connect with the five elements.',
-    practiceCount:
-      filters?.elements?.reduce(
-        (sum: number, item: any) => sum + item.count,
-        0
-      ) ?? 0,
-    icon: require('../../assets/images/CategoryIcon/Elemental.png'),
-  },
-];
+    {
+      id: 'elemental',
+      title: 'Elemental',
+      description: 'Connect with the five elements.',
+      practiceCount:
+        filters?.elements?.reduce(
+          (sum: number, item: any) => sum + item.count,
+          0
+        ) ?? 0,
+      icon: require('../../assets/images/CategoryIcon/Elemental.png'),
+    },
+  ];
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
 
       {/* Recommended for You */}
       <View style={styles.sectionHeader}>
         <Text style={[styles.sectionTitle, { color: colors.text }]}>Recommended for You</Text>
-        <TouchableOpacity activeOpacity={0.7}>
+        <TouchableOpacity activeOpacity={0.7} onPress={() => router.push('/recommendedlist')}>
           <Text style={[styles.viewAll, { color: colors.text }]}>View All  {'>'}</Text>
         </TouchableOpacity>
       </View>
@@ -515,9 +516,9 @@ export default function Recommendedforyou({
       {/* Browse by Category */}
       <View style={[styles.sectionHeader, { marginTop: 28 }]}>
         <Text style={[styles.sectionTitle, { color: colors.text }]}>Browse by Category</Text>
-        <TouchableOpacity activeOpacity={0.7}>
+        {/* <TouchableOpacity activeOpacity={0.7}>
           <Text style={[styles.viewAll, { color: colors.text }]}>View All  {'>'}</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </View>
 
       <View style={[styles.categoryCard, { backgroundColor: colors.cardPurple }]}>

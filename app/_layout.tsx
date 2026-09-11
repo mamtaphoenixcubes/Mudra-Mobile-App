@@ -53,6 +53,7 @@ export default function RootLayout() {
               <Stack.Screen name="savedempty" options={{ headerShown: false }} />
               <Stack.Screen name="subscription" options={{ headerShown: false }} />
               <Stack.Screen name="plandetail" options={{ headerShown: false }} />
+              <Stack.Screen name="razorpay-test" options={{ headerShown: false }} />
               <Stack.Screen name="myplaylists" options={{ headerShown: false }} />
               <Stack.Screen name="playlistdetail" options={{ headerShown: false }} />
               <Stack.Screen name="playlistcategoryselect" options={{ headerShown: false }} />
@@ -112,6 +113,9 @@ export default function RootLayout() {
               <Stack.Screen name="contactus" options={{ headerShown: false }} />
               <Stack.Screen name="ticketdetail" options={{ headerShown: false }} />
               <Stack.Screen name="ticketlist" options={{ headerShown: false }} />
+
+              <Stack.Screen name="recommendedlist" options={{ headerShown: false }} />
+              <Stack.Screen name="invoice" options={{ headerShown: false }} />
 
 
             </Stack>
